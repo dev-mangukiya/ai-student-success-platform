@@ -18,6 +18,8 @@ import pandas as pd
 import dill
 import plotly.express as px
 import plotly.graph_objects as go
+import shap
+import matplotlib.pyplot as plt
 
 from src.components.rag_advisor import RAGAdvisor
 
@@ -36,14 +38,12 @@ st.set_page_config(
 # ==========================
 st.markdown("""
     <style>
-        /* Import Premium Typography */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
         html, body, [class*="css"] {
             font-family: 'Inter', sans-serif !important;
         }
         
-        /* Smooth Entrance Animations */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -53,7 +53,6 @@ st.markdown("""
             animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Tactile Hover Cards */
         .metric-card {
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             position: relative;
@@ -64,7 +63,6 @@ st.markdown("""
             box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
         }
         
-        /* Stylized Tabs */
         .stTabs [data-baseweb="tab-list"] {
             gap: 8px;
             padding-bottom: 5px;
@@ -88,11 +86,9 @@ st.markdown("""
             box-shadow: 0 4px 12px rgba(30,41,59,0.2);
         }
         
-        /* Clean Input Sliders & Selectboxes */
         .stSlider > div > div > div { background-color: #3B82F6 !important; }
         div[data-baseweb="select"] > div { border-radius: 8px !important; }
 
-        /* FIX: Native Container Styling for the AI Report */
         .ai-report-container {
             background-color: white;
             padding: 40px;
@@ -120,6 +116,8 @@ if "weak_features" not in st.session_state:
     st.session_state.weak_features = []
 if "ai_advice" not in st.session_state:
     st.session_state.ai_advice = None
+if "transformed_input" not in st.session_state:
+    st.session_state.transformed_input = None
 
 
 # ==========================
@@ -199,8 +197,10 @@ if predict_clicked:
         "writing score": [writing_score]
     })
 
-    transformed_data = preprocessor.transform(input_data)
-    pred = model.predict(transformed_data)[0]
+    # Cache transformed data for SHAP tab
+    st.session_state.transformed_input = preprocessor.transform(input_data)
+    
+    pred = model.predict(st.session_state.transformed_input)[0]
     st.session_state.prediction = pred
 
     # Core Metric Risk Allocations
@@ -224,9 +224,10 @@ if predict_clicked:
 # ==========================
 if st.session_state.prediction_triggered:
 
-    dashboard, charts, ai = st.tabs([
+    dashboard, charts, explain, ai = st.tabs([
         "⊞ Executive Dashboard", 
         "🌌 Advanced Visualizations", 
+        "🧠 AI Explainability",
         "🤖 AI Strategy Engine"
     ])
 
@@ -390,7 +391,55 @@ if st.session_state.prediction_triggered:
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ==========================
-    # TAB 3: AI STRATEGY ENGINE
+    # TAB 3: AI EXPLAINABILITY (SHAP)
+    # ==========================
+    with explain:
+        st.markdown("<div class='animated-container' style='margin-top: 25px;'>", unsafe_allow_html=True)
+        
+        st.markdown(
+            """
+            <div style='background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid #F1F5F9; margin-bottom: 25px;'>
+                <h3 style='margin: 0 0 10px 0; color: #1E293B; font-weight: 800;'>🧠 Neural Decision Transparency</h3>
+                <p style='color: #64748B; margin: 0; font-size: 1.05rem;'>SHAP (SHapley Additive exPlanations) unpacks the machine learning model's black box. This waterfall chart visualizes exactly how much each specific input feature increased (red) or decreased (blue) your final predicted score from the model's base expected value.</p>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
+
+        with st.spinner("Executing Shapley Additive Explanations on live neural vectors..."):
+            try:
+                # Initialize SHAP explainer
+                # For XGBoost/Tree models, TreeExplainer is fast and highly optimized
+                explainer = shap.Explainer(model)
+                
+                # Calculate SHAP values for the specific transformed input
+                shap_values = explainer(st.session_state.transformed_input)
+                
+                # Setup Matplotlib figure for the SHAP Waterfall Plot
+                fig, ax = plt.subplots(figsize=(10, 6))
+                
+                # Attempt to get feature names if the preprocessor exposes them, 
+                # otherwise SHAP defaults to feature numbers which still demonstrates the mathematical logic.
+                try:
+                    feature_names = preprocessor.get_feature_names_out()
+                    shap_values.feature_names = feature_names
+                except Exception:
+                    pass # Fallback to numerical indexing if pipeline doesn't support get_feature_names_out()
+
+                # Generate the Waterfall plot
+                shap.plots.waterfall(shap_values[0], show=False)
+                
+                # Inject plot into Streamlit UI
+                st.pyplot(fig, clear_figure=True)
+
+            except Exception as e:
+                st.error(f"SHAP Matrix Generation Error: Ensure your model type is supported by SHAP Explainers. Details: {e}")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+
+    # ==========================
+    # TAB 4: AI STRATEGY ENGINE
     # ==========================
     with ai:
         st.markdown("<div class='animated-container' style='margin-top: 25px;'>", unsafe_allow_html=True)
@@ -402,7 +451,6 @@ if st.session_state.prediction_triggered:
                     st.session_state.weak_features
                 )
 
-        # FIX: The AI text is cleanly parsed into a separate HTML container styling div.
         st.markdown('<div class="ai-report-container">', unsafe_allow_html=True)
         st.markdown(st.session_state.ai_advice)
         st.markdown('</div>', unsafe_allow_html=True)
