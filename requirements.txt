@@ -1,11 +1,16 @@
 # ==========================
 # AI Student Success Platform
 # Requirements
-# Phase 1-4: ML + MLOps + Explainability
+# Python 3.11
+# Phase 1-5
+# ML + MLOps + SHAP + RAG
 # ==========================
 
 
-# --- Core ML ---
+# --------------------------
+# Core ML
+# --------------------------
+
 pandas==2.2.2
 numpy==1.26.4
 scikit-learn==1.5.1
@@ -13,28 +18,59 @@ xgboost==2.1.1
 dill==0.3.8
 
 
-# --- Explainable AI ---
+# --------------------------
+# Explainable AI
+# --------------------------
+
 shap==0.48.0
 
 
-# --- Experiment Tracking ---
+# --------------------------
+# Experiment Tracking
+# --------------------------
+
 mlflow==3.1.1
 
 
-# --- Visualization ---
+# --------------------------
+# Generative AI / RAG (Phase 5)
+# --------------------------
+
+google-generativeai==0.8.5
+
+langchain==0.3.26
+langchain-community==0.3.26
+langchain-google-genai==2.0.10
+
+faiss-cpu==1.8.0.post1
+
+
+# --------------------------
+# Dashboard (Phase 6)
+# --------------------------
+
+streamlit==1.38.0
+
+
+# --------------------------
+# Visualization
+# --------------------------
+
 matplotlib==3.10.3
 plotly==5.24.0
 
 
-# --- Frontend (Phase 6) ---
-streamlit==1.38.0
+# --------------------------
+# Utilities
+# --------------------------
 
-
-# --- Utilities ---
 python-dotenv==1.0.1
 pyyaml==6.0.2
 
 
-# --- Testing / CI ---
+# --------------------------
+# Testing / CI
+# --------------------------
+
 pytest==8.3.3
 flake8==7.1.1

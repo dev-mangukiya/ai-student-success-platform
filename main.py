@@ -2,6 +2,7 @@ from src.components.data_ingestion import DataIngestion
 from src.components.data_validation import DataValidation
 from src.components.data_transformation import DataTransformation
 from src.components.model_trainer import ModelTrainer
+from src.components.rag_advisor import RAGAdvisor
 
 
 if __name__ == "__main__":
@@ -128,6 +129,43 @@ if __name__ == "__main__":
     )
 
 
+
+    # ================================
+    # STEP 5: AI RAG ADVISOR
+    # ================================
+
+
+    advisor = RAGAdvisor()
+
+
+    advice = advisor.generate_advice(
+
+        prediction=score,
+
+        weak_features=[
+
+            "math score",
+
+            "test preparation course",
+
+            "previous academic performance"
+
+        ]
+
+    )
+
+
     print(
-        "Complete ML Pipeline Finished Successfully 🚀"
+        "\n========== AI STUDENT ADVISOR ==========\n"
+    )
+
+
+    print(
+        advice
+    )
+
+
+
+    print(
+        "\nComplete AI Student Success Pipeline Finished Successfully 🚀"
     )
