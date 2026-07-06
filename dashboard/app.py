@@ -1,11 +1,9 @@
 import sys
 import os
 
-
 # ==========================
 # FIX PROJECT IMPORT PATH
 # ==========================
-
 sys.path.append(
     os.path.abspath(
         os.path.join(
@@ -14,7 +12,6 @@ sys.path.append(
         )
     )
 )
-
 
 import streamlit as st
 import pandas as pd
@@ -25,11 +22,9 @@ import plotly.graph_objects as go
 from src.components.rag_advisor import RAGAdvisor
 
 
-
 # ==========================
 # PAGE CONFIG
 # ==========================
-
 st.set_page_config(
     page_title="AI Student Success Platform",
     page_icon="🎓",
@@ -37,372 +32,140 @@ st.set_page_config(
 )
 
 
+# ==========================
+# INITIALIZE SESSION STATE
+# ==========================
+if "prediction_triggered" not in st.session_state:
+    st.session_state.prediction_triggered = False
+if "prediction" not in st.session_state:
+    st.session_state.prediction = None
+if "avg_score" not in st.session_state:
+    st.session_state.avg_score = None
+if "weak_features" not in st.session_state:
+    st.session_state.weak_features = []
+if "ai_advice" not in st.session_state:
+    st.session_state.ai_advice = None
+
 
 # ==========================
 # HEADER
 # ==========================
-
-st.title(
-    "🎓 AI Student Success Platform"
-)
-
-st.write(
-    "End-to-End ML + Explainable AI + Generative AI Student Advisor"
-)
-
+st.title("🎓 AI Student Success Platform")
+st.write("End-to-End ML + Explainable AI + Generative AI Student Advisor")
 
 
 # ==========================
-# LOAD ARTIFACTS
+# LOAD ARTIFACTS & RESOURCES
 # ==========================
-
 @st.cache_resource
 def load_artifacts():
+    with open("artifacts/models/model.pkl", "rb") as file:
+        model = dill.load(file)
 
-
-    with open(
-        "artifacts/models/model.pkl",
-        "rb"
-    ) as file:
-
-        model = dill.load(
-            file
-        )
-
-
-    with open(
-        "artifacts/preprocessors/preprocessor.pkl",
-        "rb"
-    ) as file:
-
-        preprocessor = dill.load(
-            file
-        )
-
+    with open("artifacts/preprocessors/preprocessor.pkl", "rb") as file:
+        preprocessor = dill.load(file)
 
     return model, preprocessor
 
-
+@st.cache_resource
+def load_advisor():
+    return RAGAdvisor()
 
 model, preprocessor = load_artifacts()
-
+advisor = load_advisor()
 
 
 # ==========================
 # SIDEBAR INPUT
 # ==========================
+st.sidebar.header("🎯 Student Information")
 
-st.sidebar.header(
-    "🎯 Student Information"
-)
+gender = st.sidebar.selectbox("Gender", ["male", "female"])
+race = st.sidebar.selectbox("Race/Ethnicity", ["group A", "group B", "group C", "group D", "group E"])
+parental = st.sidebar.selectbox("Parental Education", ["some high school", "high school", "some college", "associate's degree", "bachelor's degree", "master's degree"])
+lunch = st.sidebar.selectbox("Lunch", ["standard", "free/reduced"])
+test_preparation_course = st.sidebar.selectbox("Test Preparation", ["completed", "none"])
 
-
-
-gender = st.sidebar.selectbox(
-    "Gender",
-    [
-        "male",
-        "female"
-    ]
-)
-
-
-race = st.sidebar.selectbox(
-    "Race/Ethnicity",
-    [
-        "group A",
-        "group B",
-        "group C",
-        "group D",
-        "group E"
-    ]
-)
-
-
-parental = st.sidebar.selectbox(
-    "Parental Education",
-    [
-        "some high school",
-        "high school",
-        "some college",
-        "associate's degree",
-        "bachelor's degree",
-        "master's degree"
-    ]
-)
-
-
-lunch = st.sidebar.selectbox(
-    "Lunch",
-    [
-        "standard",
-        "free/reduced"
-    ]
-)
-
-
-test_preparation_course = st.sidebar.selectbox(
-    "Test Preparation",
-    [
-        "completed",
-        "none"
-    ]
-)
-
-
-
-math_score = st.sidebar.slider(
-    "Math Score",
-    0,
-    100,
-    70
-)
-
-
-reading_score = st.sidebar.slider(
-    "Reading Score",
-    0,
-    100,
-    70
-)
-
-
-writing_score = st.sidebar.slider(
-    "Writing Score",
-    0,
-    100,
-    70
-)
-
+math_score = st.sidebar.slider("Math Score", 0, 100, 70)
+reading_score = st.sidebar.slider("Reading Score", 0, 100, 70)
+writing_score = st.sidebar.slider("Writing Score", 0, 100, 70)
 
 
 # ==========================
-# PREDICT
+# PREDICTION TRIGGER
 # ==========================
+if st.sidebar.button("Predict Student Performance 🚀"):
+    st.session_state.prediction_triggered = True
+    
+    input_data = pd.DataFrame({
+        "gender": [gender],
+        "race/ethnicity": [race],
+        "parental level of education": [parental],
+        "lunch": [lunch],
+        "test preparation course": [test_preparation_course],
+        "math score": [math_score],
+        "reading score": [reading_score],
+        "writing score": [writing_score]
+    })
 
-if st.button(
-    "Predict Student Performance 🚀"
-):
+    transformed_data = preprocessor.transform(input_data)
+    pred = model.predict(transformed_data)[0]
+    st.session_state.prediction = round(pred, 2)
 
-
-    input_data = pd.DataFrame(
-        {
-
-            "gender":
-            [
-                gender
-            ],
-
-            "race/ethnicity":
-            [
-                race
-            ],
-
-            "parental level of education":
-            [
-                parental
-            ],
-
-            "lunch":
-            [
-                lunch
-            ],
-
-            "test preparation course":
-            [
-                test_preparation_course
-            ],
-
-            "math score":
-            [
-                math_score
-            ],
-
-            "reading score":
-            [
-                reading_score
-            ],
-
-            "writing score":
-            [
-                writing_score
-            ]
-
-        }
-    )
-
-
-
-    transformed_data = preprocessor.transform(
-        input_data
-    )
-
-
-    prediction = model.predict(
-        transformed_data
-    )[0]
-
-
-    prediction = round(
-        prediction,
-        2
-    )
-
-
-
-    # ==========================
-    # WEAKNESS LOGIC
-    # ==========================
-
-    weak_features = []
-
-
+    # Weakness Logic
+    weak = []
     if math_score < 60:
-
-        weak_features.append(
-            "Math"
-        )
-
-
+        weak.append("Math")
     if reading_score < 60:
-
-        weak_features.append(
-            "Reading"
-        )
-
-
+        weak.append("Reading")
     if writing_score < 60:
-
-        weak_features.append(
-            "Writing"
-        )
-
-
+        weak.append("Writing")
     if test_preparation_course == "none":
-
-        weak_features.append(
-            "Test Preparation"
-        )
-
-
-
-    avg_score = round(
-        (
-            math_score
-            +
-            reading_score
-            +
-            writing_score
-        )
-        /
-        3,
-        2
-    )
+        weak.append("Test Preparation")
+        
+    st.session_state.weak_features = weak
+    st.session_state.avg_score = round((math_score + reading_score + writing_score) / 3, 2)
+    
+    # Reset AI text buffer to force a new request when input changes
+    st.session_state.ai_advice = None
 
 
+# ==========================
+# DISPLAY INTERFACE
+# ==========================
+if st.session_state.prediction_triggered:
 
-    # ==========================
-    # TABS
-    # ==========================
-
-
-    dashboard, charts, ai = st.tabs(
-        [
-            "📊 Dashboard",
-            "📈 Analytics",
-            "🤖 AI Advisor"
-        ]
-    )
-
-
+    # Tabs are safe out of the transient button lifecycle
+    dashboard, charts, ai = st.tabs([
+        "📊 Dashboard", 
+        "📈 Analytics", 
+        "🤖 AI Advisor"
+    ])
 
     # ==========================
     # DASHBOARD
     # ==========================
-
     with dashboard:
-
-
-        col1, col2, col3 = st.columns(
-            3
-        )
-
-
-        col1.metric(
-            "AI Prediction",
-            prediction
-        )
-
-
-        col2.metric(
-            "Average Score",
-            avg_score
-        )
-
-
-        col3.metric(
-            "Weak Areas",
-            len(
-                weak_features
-            )
-        )
-
+        col1, col2, col3 = st.columns(3)
+        col1.metric("AI Prediction", st.session_state.prediction)
+        col2.metric("Average Score", st.session_state.avg_score)
+        col3.metric("Weak Areas", len(st.session_state.weak_features))
 
         st.divider()
 
-
-
-        if weak_features:
-
-
-            st.warning(
-                "Improve: "
-                +
-                ", ".join(
-                    weak_features
-                )
-            )
-
-
+        if st.session_state.weak_features:
+            st.warning("Improve: " + ", ".join(st.session_state.weak_features))
         else:
-
-
-            st.success(
-                "Excellent! No major weakness detected 🎉"
-            )
-
-
+            st.success("Excellent! No major weakness detected 🎉")
 
     # ==========================
     # ANALYTICS
     # ==========================
-
-
     with charts:
-
-
-        score_df = pd.DataFrame(
-            {
-
-                "Subject":
-                [
-                    "Math",
-                    "Reading",
-                    "Writing"
-                ],
-
-
-                "Score":
-                [
-                    math_score,
-                    reading_score,
-                    writing_score
-                ]
-
-            }
-        )
-
-
+        score_df = pd.DataFrame({
+            "Subject": ["Math", "Reading", "Writing"],
+            "Score": [math_score, reading_score, writing_score]
+        })
 
         bar = px.bar(
             score_df,
@@ -411,113 +174,43 @@ if st.button(
             text="Score",
             title="Subject Performance"
         )
-
-
-        st.plotly_chart(
-            bar,
-            use_container_width=True
-        )
-
-
+        st.plotly_chart(bar, use_container_width=True)
 
         gauge = go.Figure(
-
             go.Indicator(
-
                 mode="gauge+number",
-
-                value=prediction,
-
-                title={
-                    "text":
-                    "Success Probability"
-                }
-
+                value=st.session_state.prediction,
+                title={"text": "Success Probability"}
             )
-
         )
-
-
-        st.plotly_chart(
-            gauge,
-            use_container_width=True
-        )
-
-
+        st.plotly_chart(gauge, use_container_width=True)
 
         radar = go.Figure()
-
-
         radar.add_trace(
-
             go.Scatterpolar(
-
-                r=[
-                    math_score,
-                    reading_score,
-                    writing_score
-                ],
-
-
-                theta=[
-                    "Math",
-                    "Reading",
-                    "Writing"
-                ],
-
+                r=[math_score, reading_score, writing_score],
+                theta=["Math", "Reading", "Writing"],
                 fill="toself"
-
             )
-
         )
-
-
-        radar.update_layout(
-
-            title=
-            "Skill Radar Analysis"
-
-        )
-
-
-        st.plotly_chart(
-            radar,
-            use_container_width=True
-        )
-
-
+        radar.update_layout(title="Skill Radar Analysis")
+        st.plotly_chart(radar, use_container_width=True)
 
     # ==========================
     # AI ADVISOR
     # ==========================
-
-
     with ai:
+        st.subheader("🤖 Personalized AI Improvement Advisor")
 
+        # Runs API generation ONLY once per unique prediction sequence
+        if st.session_state.ai_advice is None:
+            with st.spinner("Generating complete AI roadmap..."):
+                st.session_state.ai_advice = advisor.generate_advice(
+                    st.session_state.prediction,
+                    st.session_state.weak_features
+                )
 
-        st.subheader(
-            "🤖 Personalized AI Improvement Advisor"
-        )
+        st.markdown(st.session_state.ai_advice)
 
-
-        with st.spinner(
-            "Generating complete AI roadmap..."
-        ):
-
-
-            advisor = RAGAdvisor()
-
-
-            advice = advisor.generate_advice(
-                prediction,
-                weak_features
-            )
-
-
-
-        with st.container():
-
-
-            st.markdown(
-                advice
-            )
+else:
+    st.info("👈 Fill out the student metrics in the sidebar and hit 'Predict Student Performance' to evaluate.")
