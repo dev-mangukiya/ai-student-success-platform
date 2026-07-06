@@ -7,7 +7,7 @@ import google.generativeai as genai
 
 
 # ==========================
-# LOAD ENVIRONMENT VARIABLES
+# LOAD ENV VARIABLES
 # ==========================
 
 load_dotenv()
@@ -15,7 +15,7 @@ load_dotenv()
 
 
 # ==========================
-# RAG ADVISOR CLASS
+# RAG ADVISOR
 # ==========================
 
 class RAGAdvisor:
@@ -31,19 +31,47 @@ class RAGAdvisor:
         )
 
 
+        print(
+            "GEMINI API FOUND:",
+            api_key is not None
+        )
+
+
+        if api_key is None:
+
+            raise Exception(
+                "GOOGLE_API_KEY missing"
+            )
+
+
+
         genai.configure(
             api_key=api_key
         )
 
 
         self.model = genai.GenerativeModel(
-            "gemini-2.0-flash-lite"
+
+            model_name=
+            "gemini-2.0-flash-lite",
+
+            generation_config={
+
+                "temperature":
+                0.7,
+
+
+                "max_output_tokens":
+                3000
+
+            }
+
         )
 
 
 
     # ==========================
-    # GENERATE AI ADVICE
+    # GENERATE ADVICE
     # ==========================
 
     def generate_advice(
@@ -56,65 +84,77 @@ class RAGAdvisor:
         prompt = f"""
 
 
-You are an AI Student Performance Advisor.
+You are an expert AI Student Success Advisor.
 
 
-Analyze the student's academic performance.
+Analyze this student's academic profile.
 
 
-Student Prediction Score:
-{round(prediction,2)}
+Student Predicted Score:
+
+{round(prediction,2)}%
 
 
 Weak Areas:
+
 {weak_features}
 
 
 
-Provide a detailed improvement report:
+Create a complete personalized report:
 
 
-1. Performance Analysis
+## 📊 Performance Analysis
 
-Explain current performance level.
-
-
-
-2. Weakness Explanation
-
-Explain why these weak areas affect performance.
+Explain the student's current level.
 
 
+## ⚠️ Weak Area Explanation
 
-3. Personalized Improvement Plan
-
-Give practical steps.
-
+Explain each weak area.
 
 
-4. Study Roadmap
+## 🎯 Improvement Roadmap
 
-Give weekly improvement strategy.
+Give:
 
-
-
-5. Motivation
-
-End with encouraging advice.
+- Daily plan
+- Weekly plan
+- Priority topics
 
 
-Keep response structured and detailed.
+## 📚 Study Strategy
+
+Provide:
+
+- Learning techniques
+- Practice strategy
+- Revision plan
+
+
+## 🚀 Final Recommendation
+
+Give practical improvement advice.
+
+
+Rules:
+
+- Complete every section
+- Do not stop halfway
+- Be specific
+- Use markdown formatting
 
 
 """
 
 
 
-        # ==========================
-        # TRY GEMINI RESPONSE
-        # ==========================
-
         try:
+
+
+            print(
+                "Calling Gemini API..."
+            )
 
 
             response = self.model.generate_content(
@@ -122,18 +162,26 @@ Keep response structured and detailed.
             )
 
 
+            print(
+                "Gemini response received successfully"
+            )
+
+
             return response.text
 
 
 
-        # ==========================
-        # FALLBACK RESPONSE
-        # ==========================
-
         except Exception as error:
 
 
+            print(
+                "Gemini failed because:",
+                error
+            )
+
+
             weak_text = (
+
                 ", ".join(
                     weak_features
                 )
@@ -143,113 +191,85 @@ Keep response structured and detailed.
                 else
 
                 "No major weaknesses detected 🎉"
+
             )
 
 
 
             return f"""
 
-## 📊 AI Student Performance Report
+
+## ⚠️ Gemini Offline Mode
 
 
-### 1. Performance Analysis
+(Gemini API failed. Using backup advisor)
 
 
-Your predicted performance score is:
-
-### ⭐ {round(prediction,2)}%
+---
 
 
-This indicates your current academic performance level.
+## 📊 Performance Analysis
 
-You are progressing well, but continuous improvement can increase your score further.
+
+Predicted Performance:
+
+### {round(prediction,2)}%
+
+
+Your ML model prediction was generated successfully.
 
 
 
 ---
 
 
-## 2. Weakness Explanation
+## ⚠️ Weak Areas
 
 
-Detected Weak Areas:
-
-
-**{weak_text}**
-
-
-These areas have the highest impact on improving future performance.
+{weak_text}
 
 
 
 ---
 
 
-## 3. Personalized Improvement Plan
+## 🎯 Improvement Plan
 
 
-Recommended actions:
+- Focus on weak subjects first
 
+- Create daily practice targets
 
-- Create a fixed study routine
+- Review mistakes weekly
 
-- Practice difficult topics regularly
-
-- Review mistakes after every test
-
-- Improve problem solving speed
-
-- Track weekly progress
+- Track progress regularly
 
 
 
 ---
 
 
-## 4. Weekly Study Roadmap
+## 📚 Study Strategy
 
 
-### Week 1
+- Study in focused sessions
 
-- Identify weak concepts
+- Practice previous problems
 
-- Revise fundamentals
+- Improve weak concepts
 
-
-### Week 2
-
-- Practice questions daily
-
-- Improve accuracy
-
-
-### Week 3
-
-- Attempt mock tests
-
-- Analyze mistakes
-
-
-### Week 4
-
-- Revision
-
-- Performance optimization
+- Take regular assessments
 
 
 
 ---
 
 
-## 5. Final Recommendation 🚀
+## 🚀 Final Advice
 
 
-Your ML prediction pipeline is running successfully.
+Your AI/ML prediction pipeline is working.
 
-
-The Generative AI service limit is temporarily reached, so this backup advisor generated your improvement plan.
-
-
-Continue consistent improvement and your performance score can increase.
+Only Gemini response generation is unavailable temporarily.
 
 """
