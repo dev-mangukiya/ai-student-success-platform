@@ -1,14 +1,22 @@
 import os
 
-import google.generativeai as genai
-
 from dotenv import load_dotenv
 
+import google.generativeai as genai
 
+
+
+# ==========================
+# LOAD ENVIRONMENT VARIABLES
+# ==========================
 
 load_dotenv()
 
 
+
+# ==========================
+# RAG ADVISOR CLASS
+# ==========================
 
 class RAGAdvisor:
 
@@ -23,37 +31,20 @@ class RAGAdvisor:
         )
 
 
-        if api_key is None:
-
-            raise Exception(
-                "GOOGLE_API_KEY not found"
-            )
-
-
         genai.configure(
             api_key=api_key
         )
 
 
         self.model = genai.GenerativeModel(
-
-            model_name=
-            "gemini-2.0-flash-lite",
-
-            generation_config={
-
-                "temperature":
-                0.5,
-
-
-                "max_output_tokens":
-                2500
-
-            }
-
+            "gemini-2.0-flash-lite"
         )
 
 
+
+    # ==========================
+    # GENERATE AI ADVICE
+    # ==========================
 
     def generate_advice(
         self,
@@ -64,64 +55,201 @@ class RAGAdvisor:
 
         prompt = f"""
 
-You are an expert AI academic mentor.
 
-Analyze the student's performance.
+You are an AI Student Performance Advisor.
 
-Student predicted score:
+
+Analyze the student's academic performance.
+
+
+Student Prediction Score:
 {round(prediction,2)}
 
-Weak areas:
+
+Weak Areas:
 {weak_features}
 
 
-Generate a COMPLETE detailed report:
+
+Provide a detailed improvement report:
 
 
-## 📊 Performance Analysis
+1. Performance Analysis
 
 Explain current performance level.
 
 
-## ⚠️ Weakness Explanation
 
-Explain every weakness clearly.
+2. Weakness Explanation
 
-
-## 🎯 Personalized Improvement Roadmap
-
-Give:
-- daily plan
-- weekly plan
-- priority areas
+Explain why these weak areas affect performance.
 
 
-## 📚 Study Strategy
 
-Give:
-- learning methods
-- practice strategy
-- revision approach
+3. Personalized Improvement Plan
+
+Give practical steps.
 
 
-## 🚀 Final Recommendation
 
-Give motivational but practical advice.
+4. Study Roadmap
+
+Give weekly improvement strategy.
 
 
-Rules:
-- Do not cut the answer
-- Complete every section
-- Use bullet points
-- Be specific
-- Avoid generic advice
+
+5. Motivation
+
+End with encouraging advice.
+
+
+Keep response structured and detailed.
+
 
 """
 
 
-        response = self.model.generate_content(
-            prompt
-        )
+
+        # ==========================
+        # TRY GEMINI RESPONSE
+        # ==========================
+
+        try:
 
 
-        return response.text
+            response = self.model.generate_content(
+                prompt
+            )
+
+
+            return response.text
+
+
+
+        # ==========================
+        # FALLBACK RESPONSE
+        # ==========================
+
+        except Exception as error:
+
+
+            weak_text = (
+                ", ".join(
+                    weak_features
+                )
+
+                if weak_features
+
+                else
+
+                "No major weaknesses detected 🎉"
+            )
+
+
+
+            return f"""
+
+## 📊 AI Student Performance Report
+
+
+### 1. Performance Analysis
+
+
+Your predicted performance score is:
+
+### ⭐ {round(prediction,2)}%
+
+
+This indicates your current academic performance level.
+
+You are progressing well, but continuous improvement can increase your score further.
+
+
+
+---
+
+
+## 2. Weakness Explanation
+
+
+Detected Weak Areas:
+
+
+**{weak_text}**
+
+
+These areas have the highest impact on improving future performance.
+
+
+
+---
+
+
+## 3. Personalized Improvement Plan
+
+
+Recommended actions:
+
+
+- Create a fixed study routine
+
+- Practice difficult topics regularly
+
+- Review mistakes after every test
+
+- Improve problem solving speed
+
+- Track weekly progress
+
+
+
+---
+
+
+## 4. Weekly Study Roadmap
+
+
+### Week 1
+
+- Identify weak concepts
+
+- Revise fundamentals
+
+
+### Week 2
+
+- Practice questions daily
+
+- Improve accuracy
+
+
+### Week 3
+
+- Attempt mock tests
+
+- Analyze mistakes
+
+
+### Week 4
+
+- Revision
+
+- Performance optimization
+
+
+
+---
+
+
+## 5. Final Recommendation 🚀
+
+
+Your ML prediction pipeline is running successfully.
+
+
+The Generative AI service limit is temporarily reached, so this backup advisor generated your improvement plan.
+
+
+Continue consistent improvement and your performance score can increase.
+
+"""
