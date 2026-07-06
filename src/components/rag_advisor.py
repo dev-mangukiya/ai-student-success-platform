@@ -17,20 +17,32 @@ class RAGAdvisor:
 
 
         self.api_key = None
+        self.model = None
 
 
         # ==========================
-        # LOAD API KEY
+        # LOAD GEMINI API KEY
         # ==========================
 
         try:
 
-            self.api_key = st.secrets["GEMINI_API_KEY"]
 
-            print("✅ GEMINI KEY LOADED FROM STREAMLIT SECRETS")
+            self.api_key = st.secrets[
+                "GEMINI_API_KEY"
+            ]
 
 
-        except Exception:
+            print(
+                "✅ GEMINI KEY LOADED FROM STREAMLIT SECRETS"
+            )
+
+
+        except Exception as e:
+
+
+            print(
+                "⚠️ Streamlit secrets not found, checking ENV"
+            )
 
 
             self.api_key = os.getenv(
@@ -40,14 +52,25 @@ class RAGAdvisor:
 
             if self.api_key:
 
-                print("✅ GEMINI KEY LOADED FROM ENVIRONMENT")
+
+                print(
+                    "✅ GEMINI KEY LOADED FROM ENVIRONMENT"
+                )
 
 
             else:
 
-                print("❌ NO GEMINI API KEY FOUND")
+
+                print(
+                    "❌ GEMINI API KEY NOT FOUND"
+                )
 
 
+
+
+        # ==========================
+        # CONFIGURE GEMINI
+        # ==========================
 
         if self.api_key:
 
@@ -57,18 +80,15 @@ class RAGAdvisor:
             )
 
 
-            # IMPORTANT:
-            # use current supported model
-
             self.model = genai.GenerativeModel(
-                "gemini-2.0-flash"
+                "gemini-2.0-flash-lite"
             )
 
 
-        else:
+            print(
+                "✅ GEMINI MODEL INITIALIZED: gemini-2.0-flash-lite"
+            )
 
-
-            self.model = None
 
 
 
@@ -80,72 +100,102 @@ class RAGAdvisor:
     ):
 
 
-        print("🚀 GEMINI FUNCTION CALLED 🚀")
+        print(
+            "🚀 GEMINI FUNCTION CALLED 🚀"
+        )
 
 
         if self.model is None:
 
 
             return """
-            ⚠️ Gemini API key missing.
 
-            Add GEMINI_API_KEY in:
+⚠️ Gemini API key missing.
 
-            Streamlit Cloud
-            → Manage App
-            → Settings
-            → Secrets
-            """
+Add key:
+
+Streamlit Cloud
+→ Manage App
+→ Settings
+→ Secrets
+
+
+Format:
+
+
+GEMINI_API_KEY="your_key_here"
+
+"""
 
 
 
         try:
 
 
-            print("🌐 Sending request to Gemini...")
+            print(
+                "🌐 Sending request to Gemini..."
+            )
 
 
             prompt = f"""
 
-You are an expert AI academic advisor.
 
-Analyze this student's performance.
-
-
-Student predicted performance:
-
-{prediction}
+You are an expert AI academic mentor.
 
 
-Weak areas:
+Analyze this student:
 
+
+Predicted Academic Performance:
+{round(prediction,2)}%
+
+
+Weak Areas:
 {weak_features}
 
 
 
-Give a detailed personalized improvement plan.
+Create a COMPLETE improvement report.
 
 
 Include:
 
 
-1. Performance Analysis
+1. 📊 Performance Analysis
 
-2. Weakness Explanation
-
-3. Study Roadmap
-
-4. Daily Routine
-
-5. Resources
-
-6. Motivation
+Explain current level.
 
 
-Give a complete answer.
+2. 📉 Weakness Explanation
 
-            """
+Explain why these areas affect results.
 
+
+3. 📚 Personalized Study Roadmap
+
+Give weekly improvement plan.
+
+
+4. 🕒 Daily Routine
+
+Morning, afternoon, evening plan.
+
+
+5. 🎯 Score Improvement Strategy
+
+How to increase marks.
+
+
+6. 🚀 Motivation Advice
+
+Encourage the student.
+
+
+
+Give detailed answer.
+Do not keep it short.
+
+"""
 
 
             response = self.model.generate_content(
@@ -153,18 +203,37 @@ Give a complete answer.
             )
 
 
-            print("✅ GEMINI RESPONSE RECEIVED")
+            print(
+                "✅ GEMINI RESPONSE RECEIVED"
+            )
 
 
-            return response.text
+            if response.text:
+
+
+                return response.text
+
+
+            else:
+
+
+                return "Gemini returned empty response."
+
+
 
 
 
         except Exception as e:
 
 
-            print("❌ GEMINI FAILED")
-            print(e)
+            print(
+                "❌ GEMINI FAILED"
+            )
+
+
+            print(
+                e
+            )
 
 
             return f"""
@@ -182,10 +251,11 @@ Check:
 
 1. API quota
 
-2. Gemini model availability
+2. API key
 
-3. Streamlit secrets
+3. Model availability
 
-            """
+
+"""
 
 
