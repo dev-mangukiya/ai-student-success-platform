@@ -1,5 +1,6 @@
 # ==========================================
-# Gemini AI Student Improvement Advisor
+# AI Student Success Platform
+# Gemini AI Improvement Advisor
 # Streamlit Cloud + Local Compatible
 # ==========================================
 
@@ -17,14 +18,13 @@ class RAGAdvisor:
 
 
         # ==============================
-        # GET GEMINI API KEY
+        # LOAD GEMINI API KEY
         # ==============================
 
         self.api_key = None
 
 
-
-        # Streamlit Cloud secrets
+        # Streamlit Cloud Secrets
 
         try:
 
@@ -37,14 +37,12 @@ class RAGAdvisor:
                 ]
 
 
-
             elif "GEMINI_API_KEY" in st.secrets:
 
 
                 self.api_key = st.secrets[
                     "GEMINI_API_KEY"
                 ]
-
 
 
         except Exception:
@@ -54,9 +52,7 @@ class RAGAdvisor:
 
 
 
-
-
-        # Local .env fallback
+        # Local Environment
 
         if self.api_key is None:
 
@@ -66,6 +62,15 @@ class RAGAdvisor:
             )
 
 
+        if self.api_key is None:
+
+
+            self.api_key = os.getenv(
+                "GEMINI_API_KEY"
+            )
+
+
+
 
         # ==============================
         # DEBUG LOGS
@@ -73,23 +78,23 @@ class RAGAdvisor:
 
 
         print(
-            "================================"
+            "================================="
         )
 
 
         print(
-            "Gemini Key Loaded:",
+            "Gemini API Key Loaded:",
             bool(self.api_key)
         )
 
 
         print(
-            "Gemini Model: gemini-2.0-flash"
+            "Using Model: gemini-2.0-flash-lite"
         )
 
 
         print(
-            "================================"
+            "================================="
         )
 
 
@@ -99,15 +104,14 @@ class RAGAdvisor:
 
 
             raise Exception(
-                "Gemini API Key Missing"
+                "GOOGLE_API_KEY / GEMINI_API_KEY missing"
             )
 
 
 
 
-
         # ==============================
-        # CONFIGURE GEMINI
+        # GEMINI CONFIG
         # ==============================
 
 
@@ -118,7 +122,7 @@ class RAGAdvisor:
 
 
         self.model = genai.GenerativeModel(
-            "gemini-2.0-flash"
+            "gemini-2.0-flash-lite"
         )
 
 
@@ -126,9 +130,8 @@ class RAGAdvisor:
 
 
 
-
     # ==================================
-    # GENERATE STUDENT ADVICE
+    # GENERATE AI RESPONSE
     # ==================================
 
 
@@ -145,7 +148,6 @@ class RAGAdvisor:
 
 
 
-
         prompt = f"""
 
 
@@ -155,13 +157,12 @@ You are an expert AI Student Success Advisor.
 Analyze this student's academic performance.
 
 
-Student Information:
+Student Data:
 
 
-Predicted Performance Score:
+Predicted Score:
 
 {round(prediction,2)}%
-
 
 
 Weak Areas:
@@ -171,57 +172,68 @@ Weak Areas:
 
 
 
-
 Generate a complete personalized report.
 
 
 
-Include:
+Include these sections:
 
 
 
-1. Performance Analysis
+1. 📊 Performance Analysis
 
-- Explain current performance level
-- Mention strengths
-- Mention risks
-
-
-
-2. Weakness Explanation
-
-- Explain each weak subject
-- Why improvement is needed
+- Explain current performance
+- Strengths
+- Academic condition
 
 
 
-3. Personalized Improvement Roadmap
+2. 📉 Weakness Explanation
 
-- Daily habits
-- Learning strategy
-- Practice methods
-
-
-
-4. 7-Day Study Plan
-
-Create a day-wise schedule.
+- Explain every weak area
+- Reason behind weakness
+- How it impacts results
 
 
 
-5. Recommended Resources
+3. 🚀 Improvement Roadmap
 
-Suggest learning methods/tools.
+Give:
 
-
-
-6. Motivation
-
-Give short motivational advice.
+- Daily improvement tasks
+- Learning techniques
+- Practice strategy
 
 
 
-Make the answer detailed, practical, and student friendly.
+4. 📅 7 Day Study Plan
+
+Create a practical weekly schedule.
+
+
+
+5. 📚 Resources
+
+Suggest:
+
+- Study methods
+- Online resources
+- Practice ideas
+
+
+
+6. 💡 Final Motivation
+
+Give encouraging student advice.
+
+
+
+Rules:
+
+- Do NOT give generic answers
+- Personalize based on scores
+- Keep explanation detailed
+- Format nicely
 
 
 """
@@ -238,15 +250,24 @@ Make the answer detailed, practical, and student friendly.
 
 
 
-
             print(
                 "Gemini Response Received Successfully"
             )
 
 
 
+            if response.text:
 
-            return response.text
+
+                return response.text
+
+
+            else:
+
+
+                return (
+                    "Gemini returned an empty response."
+                )
 
 
 
@@ -256,14 +277,13 @@ Make the answer detailed, practical, and student friendly.
 
 
 
-
             print(
-                "================================"
+                "================================="
             )
 
 
             print(
-                "Gemini Failed:"
+                "Gemini API ERROR:"
             )
 
 
@@ -273,9 +293,8 @@ Make the answer detailed, practical, and student friendly.
 
 
             print(
-                "================================"
+                "================================="
             )
-
 
 
 
@@ -288,5 +307,15 @@ Make the answer detailed, practical, and student friendly.
 {str(e)}
 
 
+Possible reasons:
+
+1. Gemini free quota finished
+
+2. API limit reached
+
+3. Model temporarily unavailable
+
+
 """
+
 
