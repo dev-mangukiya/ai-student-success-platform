@@ -2,7 +2,16 @@
 
 An end-to-end **Machine Learning + Explainable AI + Generative AI (RAG)** system that predicts a student's academic performance, explains *why*, classifies their risk level, and generates a personalized improvement plan through an AI advisor.
 
-> **Status:** 🚧 Phase 1 of 8 complete — project scaffolding, logging, and exception handling. See [Roadmap](#roadmap) below.
+> **Status:** 🚀 Production AI Platform — ML Pipeline, Explainable AI, Gemini Advisor, Premium Dashboard, and Cloud Deployment completed. See [Roadmap](#roadmap) below.
+
+---
+
+## 🚀 Live Demo
+
+Experience the AI Student Success Intelligence Platform:
+
+🔗 **Live Application:**  
+https://dev-ai-student-success-platform.streamlit.app
 
 ---
 
@@ -68,11 +77,15 @@ pip install -r requirements.txt
 
 # 4. Configure environment variables
 cp .env.example .env
-# then fill in GEMINI_API_KEY (needed from Phase 6 onward)
 
-# 5. Verify setup
-python main.py
+# Add Gemini API Key
+GEMINI_API_KEY=your_api_key_here
+
+# 5. Run Application
+streamlit run dashboard/app.py
 ```
+
+---
 
 ## Running Tests
 
@@ -85,32 +98,74 @@ pytest -v
 ## Roadmap
 
 - [x] **Phase 1** — Project setup, folder structure, config, logger, custom exceptions
-- [ ] **Phase 2** — Dataset sourcing, ingestion, validation
-- [ ] **Phase 3** — Data transformation, model training, evaluation
-- [ ] **Phase 4** — MLflow experiment tracking
-- [ ] **Phase 5** — SHAP explainability
-- [ ] **Phase 6** — Gemini + LangChain + FAISS RAG advisor
-- [ ] **Phase 7** — Streamlit dashboard (Home, Prediction, Explainability, AI Advisor, Analytics)
-- [ ] **Phase 8** — Docker + CI/CD + deployment
+- [x] **Phase 2** — Dataset sourcing, ingestion, validation
+- [x] **Phase 3** — Data transformation, model training, evaluation
+- [x] **Phase 4** — MLflow experiment tracking
+- [x] **Phase 5** — SHAP explainability
+- [x] **Phase 6** — Gemini + LangChain + FAISS RAG advisor
+- [x] **Phase 7** — Streamlit dashboard (Home, Prediction, Explainability, AI Advisor, Analytics)
+- [ ] **Phase 8** — Docker + CI/CD + production improvements
 
 ---
 
 ## Architecture (high level)
 
 ```
-Data Source → Ingestion → Validation → Transformation → Feature Engineering
-  → Train/Test Split → Model Training → Evaluation → MLflow Tracking
-  → Save Best Model → Prediction Pipeline → Streamlit UI
-                                     ↓
-                         SHAP Explainability
-                                     ↓
-              Gemini + LangChain + FAISS RAG → AI Student Advisor
+Data Source 
+      ↓
+Ingestion
+      ↓
+Validation
+      ↓
+Transformation
+      ↓
+Feature Engineering
+      ↓
+Model Training
+      ↓
+Evaluation + MLflow Tracking
+      ↓
+Best Model Selection
+      ↓
+Prediction Pipeline
+      ↓
+Streamlit Dashboard
+
+        ↓
+
+SHAP Explainability
+
+        ↓
+
+Gemini + RAG AI Student Advisor
 ```
 
-*(A rendered architecture diagram + dashboard screenshots will be added as later phases are completed.)*
+---
+
+## 👨‍💻 Author
+
+### Dev Mangukiya
+
+AI & Data Science Student | AI/ML Developer
+
+Building intelligent AI systems using:
+
+- Machine Learning
+- Deep Learning
+- Generative AI
+- Explainable AI
+- MLOps
+
+
+### 🌐 Connect With Me
+
+🔗 **LinkedIn:**  
+https://www.linkedin.com/in/dev-mangukiya-93945a355/
+
 
 ---
 
 ## License
 
 MIT
+
