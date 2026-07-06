@@ -1,78 +1,89 @@
+# =====================================
+# RAG + GEMINI AI STUDENT ADVISOR
+# Streamlit Cloud Compatible
+# =====================================
+
+
 import os
-
-from dotenv import load_dotenv
-
+import streamlit as st
 import google.generativeai as genai
 
 
 
-# ==========================
-# LOAD ENV VARIABLES
-# ==========================
-
-load_dotenv()
-
-
-
-# ==========================
-# RAG ADVISOR
-# ==========================
-
 class RAGAdvisor:
 
 
-    def __init__(
-        self
-    ):
+    def __init__(self):
 
 
-        api_key = os.getenv(
-            "GOOGLE_API_KEY"
-        )
+        # ==============================
+        # LOAD GEMINI API KEY
+        # ==============================
+
+        try:
+
+            self.api_key = st.secrets[
+                "GOOGLE_API_KEY"
+            ]
 
 
-        print(
-            "GEMINI API FOUND:",
-            api_key is not None
-        )
+        except Exception:
 
 
-        if api_key is None:
-
-            raise Exception(
-                "GOOGLE_API_KEY missing"
+            self.api_key = os.getenv(
+                "GOOGLE_API_KEY"
             )
 
 
 
+        # DEBUG FOR STREAMLIT LOGS
+
+        print(
+            "================================"
+        )
+
+        print(
+            "GEMINI KEY FOUND:",
+            self.api_key is not None
+        )
+
+        print(
+            "================================"
+        )
+
+
+
+        if self.api_key is None:
+
+
+            raise Exception(
+                "GOOGLE_API_KEY NOT FOUND"
+            )
+
+
+
+        # ==============================
+        # CONFIGURE GEMINI
+        # ==============================
+
+
         genai.configure(
-            api_key=api_key
+            api_key=self.api_key
         )
 
 
         self.model = genai.GenerativeModel(
-
-            model_name=
-            "gemini-2.0-flash-lite",
-
-            generation_config={
-
-                "temperature":
-                0.7,
-
-
-                "max_output_tokens":
-                3000
-
-            }
-
+            "gemini-2.0-flash-lite"
         )
 
 
 
-    # ==========================
-    # GENERATE ADVICE
-    # ==========================
+
+
+    # ==============================
+    # GENERATE AI ADVICE
+    # ==============================
+
 
     def generate_advice(
         self,
@@ -81,80 +92,59 @@ class RAGAdvisor:
     ):
 
 
-        prompt = f"""
+        try:
 
 
-You are an expert AI Student Success Advisor.
+            prompt = f"""
+
+You are an expert AI Academic Performance Advisor.
 
 
-Analyze this student's academic profile.
+Student Details:
 
-
-Student Predicted Score:
-
+Predicted Academic Performance:
 {round(prediction,2)}%
 
 
-Weak Areas:
-
+Detected Weak Areas:
 {weak_features}
 
 
 
-Create a complete personalized report:
+Create a detailed personalized improvement report.
 
 
-## 📊 Performance Analysis
-
-Explain the student's current level.
+Include:
 
 
-## ⚠️ Weak Area Explanation
-
-Explain each weak area.
-
-
-## 🎯 Improvement Roadmap
-
-Give:
-
-- Daily plan
-- Weekly plan
-- Priority topics
+1. Performance Analysis
+- Explain current level
+- Strengths
+- Academic risk
 
 
-## 📚 Study Strategy
-
-Provide:
-
-- Learning techniques
-- Practice strategy
-- Revision plan
+2. Weakness Explanation
+- Explain each weak area
+- Why it affects performance
 
 
-## 🚀 Final Recommendation
+3. Personalized Improvement Plan
+- Daily actions
+- Learning strategy
 
-Give practical improvement advice.
+
+4. 7 Day Study Roadmap
+- Day wise schedule
 
 
-Rules:
+5. Motivation Advice
+- Short encouraging advice
 
-- Complete every section
-- Do not stop halfway
-- Be specific
-- Use markdown formatting
 
+Make response detailed, structured and student friendly.
 
 """
 
-
-
-        try:
-
-
-            print(
-                "Calling Gemini API..."
-            )
 
 
             response = self.model.generate_content(
@@ -162,114 +152,54 @@ Rules:
             )
 
 
+
             print(
-                "Gemini response received successfully"
+                "GEMINI RESPONSE GENERATED SUCCESSFULLY"
             )
+
 
 
             return response.text
 
 
 
-        except Exception as error:
+
+
+        except Exception as e:
+
 
 
             print(
-                "Gemini failed because:",
-                error
+                "================================"
             )
 
+            print(
+                "GEMINI ERROR:"
+            )
 
-            weak_text = (
+            print(
+                e
+            )
 
-                ", ".join(
-                    weak_features
-                )
-
-                if weak_features
-
-                else
-
-                "No major weaknesses detected 🎉"
-
+            print(
+                "================================"
             )
 
 
 
             return f"""
 
+⚠️ Gemini Failed
 
-## ⚠️ Gemini Offline Mode
+Actual Error:
 
-
-(Gemini API failed. Using backup advisor)
-
-
----
+{e}
 
 
-## 📊 Performance Analysis
+Check:
 
-
-Predicted Performance:
-
-### {round(prediction,2)}%
-
-
-Your ML model prediction was generated successfully.
-
-
-
----
-
-
-## ⚠️ Weak Areas
-
-
-{weak_text}
-
-
-
----
-
-
-## 🎯 Improvement Plan
-
-
-- Focus on weak subjects first
-
-- Create daily practice targets
-
-- Review mistakes weekly
-
-- Track progress regularly
-
-
-
----
-
-
-## 📚 Study Strategy
-
-
-- Study in focused sessions
-
-- Practice previous problems
-
-- Improve weak concepts
-
-- Take regular assessments
-
-
-
----
-
-
-## 🚀 Final Advice
-
-
-Your AI/ML prediction pipeline is working.
-
-Only Gemini response generation is unavailable temporarily.
+1. Streamlit Secrets
+2. API quota
+3. Gemini API key validity
 
 """
