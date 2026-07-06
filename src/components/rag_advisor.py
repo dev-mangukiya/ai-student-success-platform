@@ -4,7 +4,7 @@
 # Streamlit Cloud + Local Compatible
 # ==========================================
 
-
+print("🔥🔥🔥 NEW RAG ADVISOR FILE LOADED 🔥🔥🔥")
 import os
 import streamlit as st
 import google.generativeai as genai
