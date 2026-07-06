@@ -23,12 +23,12 @@ from src.components.rag_advisor import RAGAdvisor
 
 
 # ==========================
-# PAGE CONFIG
+# RESPONSIVE PAGE CONFIG
 # ==========================
 st.set_page_config(
     page_title="AI Student Success Platform",
     page_icon="🎓",
-    layout="wide"
+    layout="wide"  # Uses the full available browser width fluidly
 )
 
 
@@ -76,7 +76,7 @@ advisor = load_advisor()
 
 
 # ==========================
-# SIDEBAR INPUT
+# SIDEBAR INPUT (Collapsible on Mobile)
 # ==========================
 st.sidebar.header("🎯 Student Information")
 
@@ -94,7 +94,7 @@ writing_score = st.sidebar.slider("Writing Score", 0, 100, 70)
 # ==========================
 # PREDICTION TRIGGER
 # ==========================
-if st.sidebar.button("Predict Student Performance 🚀"):
+if st.sidebar.button("Predict Student Performance 🚀", use_container_width=True):
     st.session_state.prediction_triggered = True
     
     input_data = pd.DataFrame({
@@ -126,7 +126,7 @@ if st.sidebar.button("Predict Student Performance 🚀"):
     st.session_state.weak_features = weak
     st.session_state.avg_score = round((math_score + reading_score + writing_score) / 3, 2)
     
-    # Reset AI text buffer to force a new request when input changes
+    # Reset AI text buffer to force a fresh request when parameters modify
     st.session_state.ai_advice = None
 
 
@@ -135,7 +135,7 @@ if st.sidebar.button("Predict Student Performance 🚀"):
 # ==========================
 if st.session_state.prediction_triggered:
 
-    # Tabs are safe out of the transient button lifecycle
+    # Tabs scale horizontally on desktop and scroll gracefully on touch devices
     dashboard, charts, ai = st.tabs([
         "📊 Dashboard", 
         "📈 Analytics", 
@@ -146,20 +146,21 @@ if st.session_state.prediction_triggered:
     # DASHBOARD
     # ==========================
     with dashboard:
-        col1, col2, col3 = st.columns(3)
-        col1.metric("AI Prediction", st.session_state.prediction)
-        col2.metric("Average Score", st.session_state.avg_score)
-        col3.metric("Weak Areas", len(st.session_state.weak_features))
+        # Columns break down into individual stacked blocks cleanly on narrow phones
+        col1, col2, col3 = st.columns([1, 1, 1])
+        col1.metric("AI Prediction", f"{st.session_state.prediction}%")
+        col2.metric("Average Score", f"{st.session_state.avg_score}%")
+        col3.metric("Weak Areas Count", len(st.session_state.weak_features))
 
         st.divider()
 
         if st.session_state.weak_features:
-            st.warning("Improve: " + ", ".join(st.session_state.weak_features))
+            st.warning(f"**Areas of Improvement Recommended:** {', '.join(st.session_state.weak_features)}")
         else:
-            st.success("Excellent! No major weakness detected 🎉")
+            st.success("Excellent! No major academic vulnerabilities detected 🎉")
 
     # ==========================
-    # ANALYTICS
+    # ANALYTICS (Device-Width Aware)
     # ==========================
     with charts:
         score_df = pd.DataFrame({
@@ -167,6 +168,7 @@ if st.session_state.prediction_triggered:
             "Score": [math_score, reading_score, writing_score]
         })
 
+        # Bar Graph
         bar = px.bar(
             score_df,
             x="Subject",
@@ -174,17 +176,22 @@ if st.session_state.prediction_triggered:
             text="Score",
             title="Subject Performance"
         )
+        bar.update_layout(margin=dict(l=20, r=20, t=40, b=20))
         st.plotly_chart(bar, use_container_width=True)
 
+        # Gauge Chart
         gauge = go.Figure(
             go.Indicator(
                 mode="gauge+number",
                 value=st.session_state.prediction,
+                domain={'x': [0, 1], 'y': [0, 1]},
                 title={"text": "Success Probability"}
             )
         )
+        gauge.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=300)
         st.plotly_chart(gauge, use_container_width=True)
 
+        # Radar Grid Layout
         radar = go.Figure()
         radar.add_trace(
             go.Scatterpolar(
@@ -193,7 +200,11 @@ if st.session_state.prediction_triggered:
                 fill="toself"
             )
         )
-        radar.update_layout(title="Skill Radar Analysis")
+        radar.update_layout(
+            title="Skill Radar Analysis",
+            margin=dict(l=40, r=40, t=40, b=40),
+            height=350
+        )
         st.plotly_chart(radar, use_container_width=True)
 
     # ==========================
@@ -202,7 +213,6 @@ if st.session_state.prediction_triggered:
     with ai:
         st.subheader("🤖 Personalized AI Improvement Advisor")
 
-        # Runs API generation ONLY once per unique prediction sequence
         if st.session_state.ai_advice is None:
             with st.spinner("Generating complete AI roadmap..."):
                 st.session_state.ai_advice = advisor.generate_advice(
@@ -210,7 +220,9 @@ if st.session_state.prediction_triggered:
                     st.session_state.weak_features
                 )
 
-        st.markdown(st.session_state.ai_advice)
+        # Container elements guarantee fluid textual line-wrapping on compact smartphone viewports
+        with st.container():
+            st.markdown(st.session_state.ai_advice)
 
 else:
-    st.info("👈 Fill out the student metrics in the sidebar and hit 'Predict Student Performance' to evaluate.")
+    st.info("👈 Open the sidebar menu, configure student metrics, and click 'Predict Student Performance' to run evaluations.")
