@@ -1,7 +1,9 @@
 import os
+
 import google.generativeai as genai
 
 from dotenv import load_dotenv
+
 
 
 load_dotenv()
@@ -11,7 +13,9 @@ load_dotenv()
 class RAGAdvisor:
 
 
-    def __init__(self):
+    def __init__(
+        self
+    ):
 
 
         api_key = os.getenv(
@@ -22,7 +26,7 @@ class RAGAdvisor:
         if api_key is None:
 
             raise Exception(
-                "GOOGLE_API_KEY not found in .env file"
+                "GOOGLE_API_KEY not found"
             )
 
 
@@ -32,7 +36,21 @@ class RAGAdvisor:
 
 
         self.model = genai.GenerativeModel(
-            "gemini-2.5-flash-lite"
+
+            model_name=
+            "gemini-2.0-flash-lite",
+
+            generation_config={
+
+                "temperature":
+                0.5,
+
+
+                "max_output_tokens":
+                2500
+
+            }
+
         )
 
 
@@ -46,72 +64,64 @@ class RAGAdvisor:
 
         prompt = f"""
 
-        You are an AI student performance advisor.
+You are an expert AI academic mentor.
 
-        Student predicted score:
-        {prediction}
+Analyze the student's performance.
 
-        Weak areas detected:
-        {weak_features}
+Student predicted score:
+{round(prediction,2)}
 
-
-        Provide:
-
-        1. Performance analysis
-        2. Weakness explanation
-        3. Personalized improvement plan
-        4. Study strategy
+Weak areas:
+{weak_features}
 
 
-        Keep response:
-        - practical
-        - short
-        - student friendly
-
-        """
+Generate a COMPLETE detailed report:
 
 
+## 📊 Performance Analysis
 
-        try:
-
-
-            response = self.model.generate_content(
-
-                prompt,
-
-                generation_config={
-
-                    "max_output_tokens": 250,
-
-                    "temperature": 0.3
-
-                }
-
-            )
+Explain current performance level.
 
 
-            return response.text
+## ⚠️ Weakness Explanation
+
+Explain every weakness clearly.
 
 
+## 🎯 Personalized Improvement Roadmap
 
-        except Exception as e:
-
-
-            return f"""
-
-            AI Advisor temporarily unavailable.
-
-            Reason:
-            {e}
+Give:
+- daily plan
+- weekly plan
+- priority areas
 
 
-            ML prediction completed successfully.
+## 📚 Study Strategy
 
-            Predicted Score:
-            {prediction}
+Give:
+- learning methods
+- practice strategy
+- revision approach
 
 
-            Weak Areas:
-            {weak_features}
+## 🚀 Final Recommendation
 
-            """
+Give motivational but practical advice.
+
+
+Rules:
+- Do not cut the answer
+- Complete every section
+- Use bullet points
+- Be specific
+- Avoid generic advice
+
+"""
+
+
+        response = self.model.generate_content(
+            prompt
+        )
+
+
+        return response.text

@@ -37,10 +37,14 @@ st.set_page_config(
 )
 
 
+
+# ==========================
+# HEADER
+# ==========================
+
 st.title(
     "🎓 AI Student Success Platform"
 )
-
 
 st.write(
     "End-to-End ML + Explainable AI + Generative AI Student Advisor"
@@ -85,7 +89,7 @@ model, preprocessor = load_artifacts()
 
 
 # ==========================
-# SIDEBAR
+# SIDEBAR INPUT
 # ==========================
 
 st.sidebar.header(
@@ -146,6 +150,7 @@ test_preparation_course = st.sidebar.selectbox(
 )
 
 
+
 math_score = st.sidebar.slider(
     "Math Score",
     0,
@@ -172,7 +177,7 @@ writing_score = st.sidebar.slider(
 
 
 # ==========================
-# BUTTON
+# PREDICT
 # ==========================
 
 if st.button(
@@ -181,7 +186,6 @@ if st.button(
 
 
     input_data = pd.DataFrame(
-
         {
 
             "gender":
@@ -189,42 +193,35 @@ if st.button(
                 gender
             ],
 
-
             "race/ethnicity":
             [
                 race
             ],
-
 
             "parental level of education":
             [
                 parental
             ],
 
-
             "lunch":
             [
                 lunch
             ],
-
 
             "test preparation course":
             [
                 test_preparation_course
             ],
 
-
             "math score":
             [
                 math_score
             ],
 
-
             "reading score":
             [
                 reading_score
             ],
-
 
             "writing score":
             [
@@ -232,7 +229,6 @@ if st.button(
             ]
 
         }
-
     )
 
 
@@ -247,30 +243,16 @@ if st.button(
     )[0]
 
 
-
-    # ==========================
-    # KPI DASHBOARD
-    # ==========================
-
-    st.subheader(
-        "📊 Performance Dashboard"
-    )
-
-
-    avg_score = round(
-        (
-            math_score
-            +
-            reading_score
-            +
-            writing_score
-        )
-        /
-        3,
+    prediction = round(
+        prediction,
         2
     )
 
 
+
+    # ==========================
+    # WEAKNESS LOGIC
+    # ==========================
 
     weak_features = []
 
@@ -304,218 +286,238 @@ if st.button(
 
 
 
-    col1, col2, col3 = st.columns(
-        3
-    )
-
-
-    col1.metric(
-        "AI Prediction",
-        round(
-            prediction,
-            2
+    avg_score = round(
+        (
+            math_score
+            +
+            reading_score
+            +
+            writing_score
         )
+        /
+        3,
+        2
     )
 
 
-    col2.metric(
-        "Average Score",
-        avg_score
+
+    # ==========================
+    # TABS
+    # ==========================
+
+
+    dashboard, charts, ai = st.tabs(
+        [
+            "📊 Dashboard",
+            "📈 Analytics",
+            "🤖 AI Advisor"
+        ]
     )
 
 
-    col3.metric(
-        "Weak Areas",
-        len(
-            weak_features
+
+    # ==========================
+    # DASHBOARD
+    # ==========================
+
+    with dashboard:
+
+
+        col1, col2, col3 = st.columns(
+            3
         )
-    )
+
+
+        col1.metric(
+            "AI Prediction",
+            prediction
+        )
+
+
+        col2.metric(
+            "Average Score",
+            avg_score
+        )
+
+
+        col3.metric(
+            "Weak Areas",
+            len(
+                weak_features
+            )
+        )
+
+
+        st.divider()
+
+
+
+        if weak_features:
+
+
+            st.warning(
+                "Improve: "
+                +
+                ", ".join(
+                    weak_features
+                )
+            )
+
+
+        else:
+
+
+            st.success(
+                "Excellent! No major weakness detected 🎉"
+            )
 
 
 
     # ==========================
-    # BAR CHART
+    # ANALYTICS
     # ==========================
 
-    score_df = pd.DataFrame(
 
-        {
-
-            "Subject":
-            [
-                "Math",
-                "Reading",
-                "Writing"
-            ],
+    with charts:
 
 
-            "Score":
-            [
-                math_score,
-                reading_score,
-                writing_score
-            ]
+        score_df = pd.DataFrame(
+            {
 
-        }
-
-    )
-
-
-    fig = px.bar(
-        score_df,
-        x="Subject",
-        y="Score",
-        text="Score",
-        title="Subject Wise Score Analysis"
-    )
+                "Subject":
+                [
+                    "Math",
+                    "Reading",
+                    "Writing"
+                ],
 
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
-
-
-    # ==========================
-    # GAUGE CHART
-    # ==========================
-
-    gauge = go.Figure(
-
-        go.Indicator(
-
-            mode="gauge+number",
-
-            value=prediction,
-
-            title={
-                "text":
-                "AI Success Prediction"
-            },
-
-            gauge={
-
-                "axis":
-                {
-
-                    "range":
-                    [
-                        0,
-                        100
-                    ]
-
-                }
+                "Score":
+                [
+                    math_score,
+                    reading_score,
+                    writing_score
+                ]
 
             }
+        )
+
+
+
+        bar = px.bar(
+            score_df,
+            x="Subject",
+            y="Score",
+            text="Score",
+            title="Subject Performance"
+        )
+
+
+        st.plotly_chart(
+            bar,
+            use_container_width=True
+        )
+
+
+
+        gauge = go.Figure(
+
+            go.Indicator(
+
+                mode="gauge+number",
+
+                value=prediction,
+
+                title={
+                    "text":
+                    "Success Probability"
+                }
+
+            )
 
         )
 
-    )
+
+        st.plotly_chart(
+            gauge,
+            use_container_width=True
+        )
 
 
-    st.plotly_chart(
-        gauge,
-        use_container_width=True
-    )
+
+        radar = go.Figure()
+
+
+        radar.add_trace(
+
+            go.Scatterpolar(
+
+                r=[
+                    math_score,
+                    reading_score,
+                    writing_score
+                ],
+
+
+                theta=[
+                    "Math",
+                    "Reading",
+                    "Writing"
+                ],
+
+                fill="toself"
+
+            )
+
+        )
+
+
+        radar.update_layout(
+
+            title=
+            "Skill Radar Analysis"
+
+        )
+
+
+        st.plotly_chart(
+            radar,
+            use_container_width=True
+        )
 
 
 
     # ==========================
-    # PIE CHART
+    # AI ADVISOR
     # ==========================
 
-    pie_data = pd.DataFrame(
 
-        {
-
-            "Status":
-            [
-                "Achieved",
-                "Remaining"
-            ],
+    with ai:
 
 
-            "Value":
-            [
+        st.subheader(
+            "🤖 Personalized AI Improvement Advisor"
+        )
+
+
+        with st.spinner(
+            "Generating complete AI roadmap..."
+        ):
+
+
+            advisor = RAGAdvisor()
+
+
+            advice = advisor.generate_advice(
                 prediction,
-                100 - prediction
-            ]
-
-        }
-
-    )
-
-
-    pie = px.pie(
-
-        pie_data,
-
-        names="Status",
-
-        values="Value",
-
-        title="Performance Completion"
-
-    )
-
-
-    st.plotly_chart(
-        pie,
-        use_container_width=True
-    )
+                weak_features
+            )
 
 
 
-    # ==========================
-    # WEAK AREAS
-    # ==========================
-
-    st.subheader(
-        "📉 Weak Areas"
-    )
+        with st.container():
 
 
-    if weak_features:
-
-
-        st.warning(
-            weak_features
-        )
-
-
-    else:
-
-
-        st.success(
-            "No major weak areas detected 🎉"
-        )
-
-
-
-    # ==========================
-    # GEMINI
-    # ==========================
-
-    st.subheader(
-        "🤖 AI Improvement Advisor"
-    )
-
-
-    with st.spinner(
-        "Generating personalized roadmap..."
-    ):
-
-
-        advisor = RAGAdvisor()
-
-
-        advice = advisor.generate_advice(
-            prediction,
-            weak_features
-        )
-
-
-    st.write(
-        advice
-    )
+            st.markdown(
+                advice
+            )
