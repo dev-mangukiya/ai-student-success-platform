@@ -1,0 +1,26 @@
+{
+    "total_rows": 800,
+    "total_columns": 8,
+    "missing_values": {
+        "gender": 0,
+        "race/ethnicity": 0,
+        "parental level of education": 0,
+        "lunch": 0,
+        "test preparation course": 0,
+        "math score": 0,
+        "reading score": 0,
+        "writing score": 0
+    },
+    "duplicates": 0,
+    "columns": [
+        "gender",
+        "race/ethnicity",
+        "parental level of education",
+        "lunch",
+        "test preparation course",
+        "math score",
+        "reading score",
+        "writing score"
+    ],
+    "status": "PASSED"
+}
