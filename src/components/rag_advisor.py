@@ -1,13 +1,10 @@
-# =====================================
-# RAG + GEMINI AI STUDENT ADVISOR
-# Streamlit Cloud Compatible
-# =====================================
-
+# ==================================
+# Gemini AI Student Advisor
+# ==================================
 
 import os
 import streamlit as st
 import google.generativeai as genai
-
 
 
 class RAGAdvisor:
@@ -16,35 +13,40 @@ class RAGAdvisor:
     def __init__(self):
 
 
-        # ==============================
-        # LOAD GEMINI API KEY
-        # ==============================
-
-        try:
-
-            self.api_key = st.secrets[
-                "GOOGLE_API_KEY"
-            ]
+        self.api_key = None
 
 
-        except Exception:
+        # Streamlit Cloud Secrets
+        if "GOOGLE_API_KEY" in st.secrets:
 
+            self.api_key = st.secrets["GOOGLE_API_KEY"]
+
+
+        elif "GEMINI_API_KEY" in st.secrets:
+
+            self.api_key = st.secrets["GEMINI_API_KEY"]
+
+
+
+        # Local .env fallback
+        else:
 
             self.api_key = os.getenv(
                 "GOOGLE_API_KEY"
             )
 
 
-
-        # DEBUG FOR STREAMLIT LOGS
-
         print(
             "================================"
         )
 
         print(
-            "GEMINI KEY FOUND:",
-            self.api_key is not None
+            "Gemini Key Loaded:",
+            bool(self.api_key)
+        )
+
+        print(
+            "Using Gemini Model"
         )
 
         print(
@@ -53,18 +55,11 @@ class RAGAdvisor:
 
 
 
-        if self.api_key is None:
-
+        if not self.api_key:
 
             raise Exception(
-                "GOOGLE_API_KEY NOT FOUND"
+                "No Gemini API key found"
             )
-
-
-
-        # ==============================
-        # CONFIGURE GEMINI
-        # ==============================
 
 
         genai.configure(
@@ -73,16 +68,11 @@ class RAGAdvisor:
 
 
         self.model = genai.GenerativeModel(
-            "gemini-2.0-flash-lite"
+            "gemini-1.5-flash"
         )
 
 
 
-
-
-    # ==============================
-    # GENERATE AI ADVICE
-    # ==============================
 
 
     def generate_advice(
@@ -92,59 +82,43 @@ class RAGAdvisor:
     ):
 
 
-        try:
+        print(
+            "Calling Gemini API..."
+        )
 
 
-            prompt = f"""
+        prompt = f"""
 
-You are an expert AI Academic Performance Advisor.
+You are an AI Student Success Advisor.
 
+Analyze this student:
 
-Student Details:
+Predicted Score:
+{prediction}
 
-Predicted Academic Performance:
-{round(prediction,2)}%
-
-
-Detected Weak Areas:
+Weak Areas:
 {weak_features}
 
 
-
-Create a detailed personalized improvement report.
-
-
-Include:
-
+Generate:
 
 1. Performance Analysis
-- Explain current level
-- Strengths
-- Academic risk
-
 
 2. Weakness Explanation
-- Explain each weak area
-- Why it affects performance
-
 
 3. Personalized Improvement Plan
-- Daily actions
-- Learning strategy
+
+4. Weekly Study Roadmap
+
+5. Recommended Resources
 
 
-4. 7 Day Study Roadmap
-- Day wise schedule
-
-
-5. Motivation Advice
-- Short encouraging advice
-
-
-Make response detailed, structured and student friendly.
+Make it detailed and personalized.
 
 """
 
+
+        try:
 
 
             response = self.model.generate_content(
@@ -152,54 +126,31 @@ Make response detailed, structured and student friendly.
             )
 
 
-
             print(
-                "GEMINI RESPONSE GENERATED SUCCESSFULLY"
+                "Gemini Response Received"
             )
-
 
 
             return response.text
 
 
 
-
-
         except Exception as e:
 
 
-
             print(
-                "================================"
+                "Gemini Failed:"
             )
 
             print(
-                "GEMINI ERROR:"
+                str(e)
             )
-
-            print(
-                e
-            )
-
-            print(
-                "================================"
-            )
-
 
 
             return f"""
 
-⚠️ Gemini Failed
-
-Actual Error:
+⚠️ Gemini API Error
 
 {e}
-
-
-Check:
-
-1. Streamlit Secrets
-2. API quota
-3. Gemini API key validity
 
 """
