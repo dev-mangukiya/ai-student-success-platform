@@ -1,10 +1,13 @@
-# ==================================
-# Gemini AI Student Advisor
-# ==================================
+# ==========================================
+# Gemini AI Student Improvement Advisor
+# Streamlit Cloud + Local Compatible
+# ==========================================
+
 
 import os
 import streamlit as st
 import google.generativeai as genai
+
 
 
 class RAGAdvisor:
@@ -13,41 +16,77 @@ class RAGAdvisor:
     def __init__(self):
 
 
+        # ==============================
+        # GET GEMINI API KEY
+        # ==============================
+
         self.api_key = None
 
 
-        # Streamlit Cloud Secrets
-        if "GOOGLE_API_KEY" in st.secrets:
 
-            self.api_key = st.secrets["GOOGLE_API_KEY"]
+        # Streamlit Cloud secrets
+
+        try:
 
 
-        elif "GEMINI_API_KEY" in st.secrets:
+            if "GOOGLE_API_KEY" in st.secrets:
 
-            self.api_key = st.secrets["GEMINI_API_KEY"]
+
+                self.api_key = st.secrets[
+                    "GOOGLE_API_KEY"
+                ]
+
+
+
+            elif "GEMINI_API_KEY" in st.secrets:
+
+
+                self.api_key = st.secrets[
+                    "GEMINI_API_KEY"
+                ]
+
+
+
+        except Exception:
+
+
+            pass
+
+
 
 
 
         # Local .env fallback
-        else:
+
+        if self.api_key is None:
+
 
             self.api_key = os.getenv(
                 "GOOGLE_API_KEY"
             )
 
 
+
+        # ==============================
+        # DEBUG LOGS
+        # ==============================
+
+
         print(
             "================================"
         )
+
 
         print(
             "Gemini Key Loaded:",
             bool(self.api_key)
         )
 
+
         print(
-            "Using Gemini Model"
+            "Gemini Model: gemini-2.0-flash"
         )
+
 
         print(
             "================================"
@@ -55,11 +94,21 @@ class RAGAdvisor:
 
 
 
+
         if not self.api_key:
 
+
             raise Exception(
-                "No Gemini API key found"
+                "Gemini API Key Missing"
             )
+
+
+
+
+
+        # ==============================
+        # CONFIGURE GEMINI
+        # ==============================
 
 
         genai.configure(
@@ -67,12 +116,20 @@ class RAGAdvisor:
         )
 
 
+
         self.model = genai.GenerativeModel(
-            "gemini-1.5-flash"
+            "gemini-2.0-flash"
         )
 
 
 
+
+
+
+
+    # ==================================
+    # GENERATE STUDENT ADVICE
+    # ==================================
 
 
     def generate_advice(
@@ -87,38 +144,92 @@ class RAGAdvisor:
         )
 
 
+
+
         prompt = f"""
 
-You are an AI Student Success Advisor.
 
-Analyze this student:
+You are an expert AI Student Success Advisor.
 
-Predicted Score:
-{prediction}
+
+Analyze this student's academic performance.
+
+
+Student Information:
+
+
+Predicted Performance Score:
+
+{round(prediction,2)}%
+
+
 
 Weak Areas:
+
 {weak_features}
 
 
-Generate:
+
+
+
+Generate a complete personalized report.
+
+
+
+Include:
+
+
 
 1. Performance Analysis
 
+- Explain current performance level
+- Mention strengths
+- Mention risks
+
+
+
 2. Weakness Explanation
 
-3. Personalized Improvement Plan
+- Explain each weak subject
+- Why improvement is needed
 
-4. Weekly Study Roadmap
+
+
+3. Personalized Improvement Roadmap
+
+- Daily habits
+- Learning strategy
+- Practice methods
+
+
+
+4. 7-Day Study Plan
+
+Create a day-wise schedule.
+
+
 
 5. Recommended Resources
 
+Suggest learning methods/tools.
 
-Make it detailed and personalized.
+
+
+6. Motivation
+
+Give short motivational advice.
+
+
+
+Make the answer detailed, practical, and student friendly.
+
 
 """
 
 
+
         try:
+
 
 
             response = self.model.generate_content(
@@ -126,31 +237,56 @@ Make it detailed and personalized.
             )
 
 
+
+
             print(
-                "Gemini Response Received"
+                "Gemini Response Received Successfully"
             )
+
+
 
 
             return response.text
 
 
 
+
+
         except Exception as e:
+
+
+
+
+            print(
+                "================================"
+            )
 
 
             print(
                 "Gemini Failed:"
             )
 
+
             print(
                 str(e)
             )
+
+
+            print(
+                "================================"
+            )
+
+
+
 
 
             return f"""
 
 ⚠️ Gemini API Error
 
-{e}
+
+{str(e)}
+
 
 """
+
