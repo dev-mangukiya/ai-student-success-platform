@@ -19,6 +19,8 @@ sys.path.append(
 import streamlit as st
 import pandas as pd
 import dill
+import plotly.express as px
+import plotly.graph_objects as go
 
 from src.components.rag_advisor import RAGAdvisor
 
@@ -47,7 +49,7 @@ st.write(
 
 
 # ==========================
-# LOAD MODEL + PREPROCESSOR
+# LOAD ARTIFACTS
 # ==========================
 
 @st.cache_resource
@@ -83,11 +85,11 @@ model, preprocessor = load_artifacts()
 
 
 # ==========================
-# SIDEBAR INPUTS
+# SIDEBAR
 # ==========================
 
 st.sidebar.header(
-    "Enter Student Details"
+    "🎯 Student Information"
 )
 
 
@@ -136,7 +138,7 @@ lunch = st.sidebar.selectbox(
 
 
 test_preparation_course = st.sidebar.selectbox(
-    "Test Preparation Course",
+    "Test Preparation",
     [
         "completed",
         "none"
@@ -170,7 +172,7 @@ writing_score = st.sidebar.slider(
 
 
 # ==========================
-# PREDICTION
+# BUTTON
 # ==========================
 
 if st.button(
@@ -179,58 +181,66 @@ if st.button(
 
 
     input_data = pd.DataFrame(
+
         {
 
-            "gender": [
+            "gender":
+            [
                 gender
             ],
 
-            "race/ethnicity": [
+
+            "race/ethnicity":
+            [
                 race
             ],
 
-            "parental level of education": [
+
+            "parental level of education":
+            [
                 parental
             ],
 
-            "lunch": [
+
+            "lunch":
+            [
                 lunch
             ],
 
-            "test preparation course": [
+
+            "test preparation course":
+            [
                 test_preparation_course
             ],
 
-            "math score": [
+
+            "math score":
+            [
                 math_score
             ],
 
-            "reading score": [
+
+            "reading score":
+            [
                 reading_score
             ],
 
-            "writing score": [
+
+            "writing score":
+            [
                 writing_score
             ]
 
         }
+
     )
 
 
-
-    # ==========================
-    # PREPROCESS DATA
-    # ==========================
 
     transformed_data = preprocessor.transform(
         input_data
     )
 
-
-
-    # ==========================
-    # MODEL PREDICTION
-    # ==========================
 
     prediction = model.predict(
         transformed_data
@@ -238,15 +248,29 @@ if st.button(
 
 
 
-    st.success(
-        f"Predicted Score: {round(prediction, 2)}"
+    # ==========================
+    # KPI DASHBOARD
+    # ==========================
+
+    st.subheader(
+        "📊 Performance Dashboard"
     )
 
 
+    avg_score = round(
+        (
+            math_score
+            +
+            reading_score
+            +
+            writing_score
+        )
+        /
+        3,
+        2
+    )
 
-    # ==========================
-    # WEAK FEATURE DETECTION
-    # ==========================
+
 
     weak_features = []
 
@@ -254,31 +278,198 @@ if st.button(
     if math_score < 60:
 
         weak_features.append(
-            "math score"
+            "Math"
         )
 
 
     if reading_score < 60:
 
         weak_features.append(
-            "reading score"
+            "Reading"
         )
 
 
     if writing_score < 60:
 
         weak_features.append(
-            "writing score"
+            "Writing"
         )
 
 
     if test_preparation_course == "none":
 
         weak_features.append(
-            "test preparation course"
+            "Test Preparation"
         )
 
 
+
+    col1, col2, col3 = st.columns(
+        3
+    )
+
+
+    col1.metric(
+        "AI Prediction",
+        round(
+            prediction,
+            2
+        )
+    )
+
+
+    col2.metric(
+        "Average Score",
+        avg_score
+    )
+
+
+    col3.metric(
+        "Weak Areas",
+        len(
+            weak_features
+        )
+    )
+
+
+
+    # ==========================
+    # BAR CHART
+    # ==========================
+
+    score_df = pd.DataFrame(
+
+        {
+
+            "Subject":
+            [
+                "Math",
+                "Reading",
+                "Writing"
+            ],
+
+
+            "Score":
+            [
+                math_score,
+                reading_score,
+                writing_score
+            ]
+
+        }
+
+    )
+
+
+    fig = px.bar(
+        score_df,
+        x="Subject",
+        y="Score",
+        text="Score",
+        title="Subject Wise Score Analysis"
+    )
+
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+
+
+    # ==========================
+    # GAUGE CHART
+    # ==========================
+
+    gauge = go.Figure(
+
+        go.Indicator(
+
+            mode="gauge+number",
+
+            value=prediction,
+
+            title={
+                "text":
+                "AI Success Prediction"
+            },
+
+            gauge={
+
+                "axis":
+                {
+
+                    "range":
+                    [
+                        0,
+                        100
+                    ]
+
+                }
+
+            }
+
+        )
+
+    )
+
+
+    st.plotly_chart(
+        gauge,
+        use_container_width=True
+    )
+
+
+
+    # ==========================
+    # PIE CHART
+    # ==========================
+
+    pie_data = pd.DataFrame(
+
+        {
+
+            "Status":
+            [
+                "Achieved",
+                "Remaining"
+            ],
+
+
+            "Value":
+            [
+                prediction,
+                100 - prediction
+            ]
+
+        }
+
+    )
+
+
+    pie = px.pie(
+
+        pie_data,
+
+        names="Status",
+
+        values="Value",
+
+        title="Performance Completion"
+
+    )
+
+
+    st.plotly_chart(
+        pie,
+        use_container_width=True
+    )
+
+
+
+    # ==========================
+    # WEAK AREAS
+    # ==========================
 
     st.subheader(
         "📉 Weak Areas"
@@ -287,25 +478,32 @@ if st.button(
 
     if weak_features:
 
-        st.write(
+
+        st.warning(
             weak_features
         )
 
 
     else:
 
-        st.write(
+
+        st.success(
             "No major weak areas detected 🎉"
         )
 
 
 
     # ==========================
-    # GEMINI AI ADVISOR
+    # GEMINI
     # ==========================
 
+    st.subheader(
+        "🤖 AI Improvement Advisor"
+    )
+
+
     with st.spinner(
-        "Generating AI Improvement Plan..."
+        "Generating personalized roadmap..."
     ):
 
 
@@ -316,12 +514,6 @@ if st.button(
             prediction,
             weak_features
         )
-
-
-
-    st.subheader(
-        "🤖 AI Improvement Advisor"
-    )
 
 
     st.write(
