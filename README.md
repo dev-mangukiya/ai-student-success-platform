@@ -160,7 +160,7 @@ Building intelligent AI systems using:
 ### 🌐 Connect With Me
 
 🔗 **LinkedIn:**  
-https://www.linkedin.com/in/dev-mangukiya-93945a355/
+https://www.linkedin.com/in/devmangukiya/
 
 
 ---
