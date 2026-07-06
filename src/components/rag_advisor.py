@@ -1,10 +1,6 @@
-# ==========================================
-# AI Student Success Platform
-# Gemini AI Improvement Advisor
-# Streamlit Cloud + Local Compatible
-# ==========================================
+print("🔥🔥🔥 NEW RAG_ADVISOR.PY FILE LOADED 🔥🔥🔥")
 
-print("🔥🔥🔥 NEW RAG ADVISOR FILE LOADED 🔥🔥🔥")
+
 import os
 import streamlit as st
 import google.generativeai as genai
@@ -17,52 +13,24 @@ class RAGAdvisor:
     def __init__(self):
 
 
-        # ==============================
-        # LOAD GEMINI API KEY
-        # ==============================
+        print("🤖 RAGAdvisor object created")
+
 
         self.api_key = None
 
 
-        # Streamlit Cloud Secrets
+        # ==========================
+        # LOAD API KEY
+        # ==========================
 
         try:
 
+            self.api_key = st.secrets["GEMINI_API_KEY"]
 
-            if "GOOGLE_API_KEY" in st.secrets:
-
-
-                self.api_key = st.secrets[
-                    "GOOGLE_API_KEY"
-                ]
-
-
-            elif "GEMINI_API_KEY" in st.secrets:
-
-
-                self.api_key = st.secrets[
-                    "GEMINI_API_KEY"
-                ]
+            print("✅ GEMINI KEY LOADED FROM STREAMLIT SECRETS")
 
 
         except Exception:
-
-
-            pass
-
-
-
-        # Local Environment
-
-        if self.api_key is None:
-
-
-            self.api_key = os.getenv(
-                "GOOGLE_API_KEY"
-            )
-
-
-        if self.api_key is None:
 
 
             self.api_key = os.getenv(
@@ -70,69 +38,39 @@ class RAGAdvisor:
             )
 
 
+            if self.api_key:
+
+                print("✅ GEMINI KEY LOADED FROM ENVIRONMENT")
 
 
-        # ==============================
-        # DEBUG LOGS
-        # ==============================
+            else:
 
-
-        print(
-            "================================="
-        )
-
-
-        print(
-            "Gemini API Key Loaded:",
-            bool(self.api_key)
-        )
-
-
-        print(
-            "Using Model: gemini-2.0-flash-lite"
-        )
-
-
-        print(
-            "================================="
-        )
+                print("❌ NO GEMINI API KEY FOUND")
 
 
 
+        if self.api_key:
 
-        if not self.api_key:
 
-
-            raise Exception(
-                "GOOGLE_API_KEY / GEMINI_API_KEY missing"
+            genai.configure(
+                api_key=self.api_key
             )
 
 
+            # IMPORTANT:
+            # use current supported model
+
+            self.model = genai.GenerativeModel(
+                "gemini-2.0-flash"
+            )
 
 
-        # ==============================
-        # GEMINI CONFIG
-        # ==============================
+        else:
 
 
-        genai.configure(
-            api_key=self.api_key
-        )
+            self.model = None
 
 
-
-        self.model = genai.GenerativeModel(
-            "gemini-2.0-flash-lite"
-        )
-
-
-
-
-
-
-    # ==================================
-    # GENERATE AI RESPONSE
-    # ==================================
 
 
     def generate_advice(
@@ -142,105 +80,71 @@ class RAGAdvisor:
     ):
 
 
-        print(
-            "Calling Gemini API..."
-        )
+        print("🚀 GEMINI FUNCTION CALLED 🚀")
+
+
+        if self.model is None:
+
+
+            return """
+            ⚠️ Gemini API key missing.
+
+            Add GEMINI_API_KEY in:
+
+            Streamlit Cloud
+            → Manage App
+            → Settings
+            → Secrets
+            """
 
 
 
-        prompt = f"""
+        try:
 
 
-You are an expert AI Student Success Advisor.
+            print("🌐 Sending request to Gemini...")
 
 
-Analyze this student's academic performance.
+            prompt = f"""
+
+You are an expert AI academic advisor.
+
+Analyze this student's performance.
 
 
-Student Data:
+Student predicted performance:
+
+{prediction}
 
 
-Predicted Score:
-
-{round(prediction,2)}%
-
-
-Weak Areas:
+Weak areas:
 
 {weak_features}
 
 
 
-
-Generate a complete personalized report.
-
+Give a detailed personalized improvement plan.
 
 
-Include these sections:
+Include:
 
 
+1. Performance Analysis
 
-1. 📊 Performance Analysis
+2. Weakness Explanation
 
-- Explain current performance
-- Strengths
-- Academic condition
+3. Study Roadmap
 
+4. Daily Routine
 
+5. Resources
 
-2. 📉 Weakness Explanation
-
-- Explain every weak area
-- Reason behind weakness
-- How it impacts results
+6. Motivation
 
 
+Give a complete answer.
 
-3. 🚀 Improvement Roadmap
-
-Give:
-
-- Daily improvement tasks
-- Learning techniques
-- Practice strategy
-
-
-
-4. 📅 7 Day Study Plan
-
-Create a practical weekly schedule.
-
-
-
-5. 📚 Resources
-
-Suggest:
-
-- Study methods
-- Online resources
-- Practice ideas
-
-
-
-6. 💡 Final Motivation
-
-Give encouraging student advice.
-
-
-
-Rules:
-
-- Do NOT give generic answers
-- Personalize based on scores
-- Keep explanation detailed
-- Format nicely
-
-
-"""
-
-
-
-        try:
+            """
 
 
 
@@ -249,54 +153,18 @@ Rules:
             )
 
 
-
-            print(
-                "Gemini Response Received Successfully"
-            )
+            print("✅ GEMINI RESPONSE RECEIVED")
 
 
-
-            if response.text:
-
-
-                return response.text
-
-
-            else:
-
-
-                return (
-                    "Gemini returned an empty response."
-                )
-
-
+            return response.text
 
 
 
         except Exception as e:
 
 
-
-            print(
-                "================================="
-            )
-
-
-            print(
-                "Gemini API ERROR:"
-            )
-
-
-            print(
-                str(e)
-            )
-
-
-            print(
-                "================================="
-            )
-
-
+            print("❌ GEMINI FAILED")
+            print(e)
 
 
             return f"""
@@ -304,18 +172,20 @@ Rules:
 ⚠️ Gemini API Error
 
 
-{str(e)}
+Actual Error:
 
 
-Possible reasons:
-
-1. Gemini free quota finished
-
-2. API limit reached
-
-3. Model temporarily unavailable
+{e}
 
 
-"""
+Check:
+
+1. API quota
+
+2. Gemini model availability
+
+3. Streamlit secrets
+
+            """
 
 
