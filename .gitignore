@@ -35,3 +35,4 @@ ai/rag/vector_store/
 # --- Streamlit ---
 .streamlit/secrets.toml
 .DS_Store
+.ipynb_checkpoints/
