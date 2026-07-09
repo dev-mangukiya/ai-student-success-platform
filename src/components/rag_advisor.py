@@ -53,11 +53,7 @@ Create a COMPLETE improvement report.
 Include Performance Analysis, Weakness Explanation, Personalized Study Roadmap, Daily Routine, Score Improvement Strategy, and Motivation Advice. Make it highly detailed and encouraging.
 """
             # Fail fast if API key is rate-limited or out of quota (HTTP 429)
-            fast_retry = retry.Retry(initial=0, maximum=0, multiplier=1.0, deadline=15.0)
-            response = self.model.generate_content(
-                prompt,
-                request_options={"retry": fast_retry, "timeout": 15.0}
-            )
+            response = self.model.generate_content(prompt)
 
             if response.text:
                 return response.text
