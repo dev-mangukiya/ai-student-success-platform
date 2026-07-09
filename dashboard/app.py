@@ -488,7 +488,6 @@ if st.session_state.prediction_triggered:
         chart_col1, chart_col2 = st.columns([1, 1])
 
         with chart_col1:
-            st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
             bar = px.bar(
                 score_df,
                 x="Subject",
@@ -518,10 +517,8 @@ if st.session_state.prediction_triggered:
                 yaxis=dict(showgrid=False, zeroline=False),
             )
             st.plotly_chart(bar, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
 
         with chart_col2:
-            st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
             gauge = go.Figure(
                 go.Indicator(
                     mode="gauge+number",
@@ -557,13 +554,11 @@ if st.session_state.prediction_triggered:
                 paper_bgcolor="rgba(0,0,0,0)",
             )
             st.plotly_chart(gauge, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("<div style='margin-top: 30px;'></div>", unsafe_allow_html=True)
 
         radar_center_col, _ = st.columns([1.5, 1])
         with radar_center_col:
-            st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
             radar = go.Figure()
             radar.add_trace(
                 go.Scatterpolar(
@@ -602,7 +597,6 @@ if st.session_state.prediction_triggered:
                 title_font=dict(size=22, color="#F8FAFC", family="Outfit"),
             )
             st.plotly_chart(radar, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -660,9 +654,7 @@ if st.session_state.prediction_triggered:
                 fig.patch.set_alpha(0.0)
                 ax.patch.set_alpha(0.0)
 
-                st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
                 st.pyplot(fig, clear_figure=True, transparent=True)
-                st.markdown("</div>", unsafe_allow_html=True)
 
             except Exception as e:
                 st.error(
