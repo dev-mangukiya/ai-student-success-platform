@@ -14,6 +14,9 @@ import plotly.graph_objects as go
 import shap
 import matplotlib.pyplot as plt
 
+import importlib
+from src.components import rag_advisor
+importlib.reload(rag_advisor)
 from src.components.rag_advisor import RAGAdvisor
 from src.config import REGRESSOR_MODEL_PATH, PREPROCESSOR_PATH
 
