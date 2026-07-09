@@ -261,7 +261,6 @@ def load_artifacts():
     return model, preprocessor
 
 
-@st.cache_resource
 def load_advisor():
     return RAGAdvisor()
 

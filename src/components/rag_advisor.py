@@ -32,7 +32,15 @@ class RAGAdvisor:
 
     def generate_advice(self, prediction, weak_features):
         if self.model is None:
-            return self._get_static_advice(prediction, weak_features)
+            error_header = f"""
+> 🚨 **SYSTEM ERROR: API Key Missing or Invalid**
+> The application could not detect a Gemini API key in Streamlit Secrets, so it cannot initialize the model.
+> 
+> *Because the live generative node failed, the system has automatically triggered the internal rules-engine backup advisor below.*
+
+---
+"""
+            return error_header + self._get_static_advice(prediction, weak_features)
 
         try:
             prompt = f"""
