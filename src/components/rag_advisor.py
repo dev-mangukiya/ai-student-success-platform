@@ -1,6 +1,9 @@
 import os
 import streamlit as st
 import google.generativeai as genai
+from dotenv import load_dotenv
+
+load_dotenv()
 
 print("🔥🔥🔥 NEW RAG_ADVISOR.PY FILE LOADED 🔥🔥🔥", flush=True)
 
@@ -15,11 +18,14 @@ class RAGAdvisor:
         # LOAD GEMINI API KEY
         # ==========================
         try:
-            self.api_key = st.secrets["GEMINI_API_KEY"]
-            print("✅ GEMINI KEY LOADED FROM STREAMLIT SECRETS", flush=True)
+            self.api_key = st.secrets.get("GEMINI_API_KEY") or st.secrets.get("GOOGLE_API_KEY")
+            if self.api_key:
+                print("✅ GEMINI KEY LOADED FROM STREAMLIT SECRETS", flush=True)
+            else:
+                raise Exception("Not found in secrets")
         except Exception as e:
             print("⚠️ Streamlit secrets not found, checking ENV", flush=True)
-            self.api_key = os.getenv("GEMINI_API_KEY")
+            self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
             
             if self.api_key:
                 print("✅ GEMINI KEY LOADED FROM ENVIRONMENT", flush=True)
