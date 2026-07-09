@@ -2,18 +2,11 @@ import os
 import streamlit as st
 import google.generativeai as genai
 from dotenv import load_dotenv
-from src.utils.logger import get_logger
-
-logger = get_logger(__name__)
 
 load_dotenv()
 
-logger.info("NEW RAG_ADVISOR.PY FILE LOADED")
-
-
 class RAGAdvisor:
     def __init__(self):
-        logger.info("RAGAdvisor object created")
         self.api_key = None
         self.model = None
 
@@ -24,18 +17,10 @@ class RAGAdvisor:
             self.api_key = st.secrets.get("GEMINI_API_KEY") or st.secrets.get(
                 "GOOGLE_API_KEY"
             )
-            if self.api_key:
-                logger.info("GEMINI KEY LOADED FROM STREAMLIT SECRETS")
-            else:
+            if not self.api_key:
                 raise Exception("Not found in secrets")
         except Exception:
-            logger.info("Streamlit secrets not found, checking ENV")
             self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-
-            if self.api_key:
-                logger.info("GEMINI KEY LOADED FROM ENVIRONMENT")
-            else:
-                logger.info("GEMINI API KEY NOT FOUND")
 
         # ==========================
         # CONFIGURE GEMINI
@@ -43,20 +28,12 @@ class RAGAdvisor:
         if self.api_key:
             genai.configure(api_key=self.api_key)
             self.model = genai.GenerativeModel("gemini-2.0-flash-lite")
-            logger.info("GEMINI MODEL INITIALIZED: gemini-2.0-flash-lite")
 
     def generate_advice(self, prediction, weak_features):
-        logger.info("GEMINI FUNCTION CALLED")
-
         if self.model is None:
-            logger.info(
-                "Model uninitialized. Routing to deep local matrix advisor..."
-            )
             return self._get_static_advice(prediction, weak_features)
 
         try:
-            logger.info("Sending request to Gemini...")
-
             prompt = f"""
 You are an expert AI academic mentor.
 Analyze this student:
@@ -67,18 +44,13 @@ Create a COMPLETE improvement report.
 Include Performance Analysis, Weakness Explanation, Personalized Study Roadmap, Daily Routine, Score Improvement Strategy, and Motivation Advice. Make it highly detailed and encouraging.
 """
             response = self.model.generate_content(prompt)
-            logger.info("GEMINI RESPONSE RECEIVED SUCCESSFULLY")
 
             if response.text:
                 return response.text
             else:
                 return "Gemini returned an empty response."
 
-        except Exception as e:
-            logger.error(f"GEMINI CALL FAILED. Exception: {e}")
-            logger.info(
-                "GEMINI CALL FAILED. Triggering deep local backup advisor..."
-            )
+        except Exception:
             return self._get_static_advice(prediction, weak_features)
 
     def _get_static_advice(self, prediction, weak_features):
