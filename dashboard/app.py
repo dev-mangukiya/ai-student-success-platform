@@ -683,9 +683,10 @@ if st.session_state.prediction_triggered:
                     st.session_state.prediction, st.session_state.weak_features
                 )
 
-        st.markdown('<div class="ai-report-container">', unsafe_allow_html=True)
-        st.markdown(st.session_state.ai_advice)
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="ai-report-container">\n\n{st.session_state.ai_advice}\n\n</div>',
+            unsafe_allow_html=True,
+        )
 
         st.markdown("</div>", unsafe_allow_html=True)
 
