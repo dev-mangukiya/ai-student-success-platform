@@ -777,6 +777,29 @@ if st.session_state.app_mode == "Student Telemetry":
 
             st.markdown("</div>", unsafe_allow_html=True)
 
+        with tracking:
+            st.markdown("<div class='animate-in' style='margin-top: 25px;'>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color: #F8FAFC; font-weight: 800; font-size: 1.6rem;'>Longitudinal Database Tracking</h3>", unsafe_allow_html=True)
+            st.markdown("<p style='color: #94A3B8;'>Historical predicted scores fetched directly from the JSON database.</p>", unsafe_allow_html=True)
+            
+            history = db.get_student_history(st.session_state.student_id)
+            if len(history) > 0:
+                hist_df = pd.DataFrame(history)
+                # Ensure timestamp is datetime for proper plotting
+                hist_df['timestamp'] = pd.to_datetime(hist_df['timestamp'])
+                
+                line_chart = px.line(
+                    hist_df, x="timestamp", y="predicted_score", 
+                    markers=True, title=f"Trajectory for {st.session_state.student_id}",
+                    color_discrete_sequence=["#38BDF8"]
+                )
+                line_chart.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="#94A3B8"))
+                st.plotly_chart(line_chart, use_container_width=True)
+            else:
+                st.info("No historical data found for this student.")
+                
+            st.markdown("</div>", unsafe_allow_html=True)
+
     else:
         # Stylized Standby Screen
         st.markdown(
