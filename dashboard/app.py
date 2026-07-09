@@ -636,7 +636,7 @@ if st.session_state.prediction_triggered:
                         "axes.labelcolor": "#94A3B8",
                         "xtick.color": "#64748B",
                         "ytick.color": "#64748B",
-                        "grid.color": "rgba(255,255,255,0.1)",
+                        "grid.color": "#ffffff1a",
                     }
                 )
 
