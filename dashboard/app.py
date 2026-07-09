@@ -13,6 +13,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import shap
 import matplotlib.pyplot as plt
+import PyPDF2
+import io
 
 import importlib
 from src.components import rag_advisor
@@ -229,6 +231,21 @@ if "ai_advice" not in st.session_state:
     st.session_state.ai_advice = None
 if "transformed_input" not in st.session_state:
     st.session_state.transformed_input = None
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "pdf_text" not in st.session_state:
+    st.session_state.pdf_text = None
+
+def extract_pdf_text(uploaded_file):
+    try:
+        reader = PyPDF2.PdfReader(uploaded_file)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() + "\n"
+        return text
+    except Exception as e:
+        st.sidebar.error(f"Failed to read PDF: {e}")
+        return None
 
 
 # ==========================
@@ -327,6 +344,10 @@ with st.sidebar:
     reading_score = st.slider("📖 Comprehension (Reading)", 0, 100, 70)
     writing_score = st.slider("✍️ Expression (Writing)", 0, 100, 70)
 
+    st.markdown("<hr style='border: none; height: 1px; background: rgba(255,255,255,0.1); margin: 30px 0;'/>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color: #94A3B8; font-weight: 600; font-size: 1rem;'>True Document RAG</h4>", unsafe_allow_html=True)
+    uploaded_syllabus = st.file_uploader("Upload Course Syllabus (PDF)", type=["pdf"], help="The AI will ingest this document and tailor your study plan to the specific course material.")
+
     st.markdown("<br>", unsafe_allow_html=True)
 
     predict_clicked = st.button(
@@ -339,6 +360,13 @@ with st.sidebar:
 # ==========================
 if predict_clicked:
     st.session_state.prediction_triggered = True
+    # Reset chat and AI advice on new prediction
+    st.session_state.messages = []
+    st.session_state.ai_advice = None
+    st.session_state.pdf_text = None
+
+    if uploaded_syllabus is not None:
+        st.session_state.pdf_text = extract_pdf_text(uploaded_syllabus)
 
     input_data = pd.DataFrame(
         {
@@ -667,20 +695,42 @@ if st.session_state.prediction_triggered:
     # TAB 4: AI STRATEGY ENGINE
     # ==========================
     with ai:
-        st.markdown(
-            "<div class='animate-in' style='margin-top: 25px;'>", unsafe_allow_html=True
-        )
+        st.markdown("<div class='animate-in' style='margin-top: 25px;'>", unsafe_allow_html=True)
 
         if st.session_state.ai_advice is None:
             with st.spinner("Initializing Gemini Generative Core..."):
                 st.session_state.ai_advice = advisor.generate_advice(
-                    st.session_state.prediction, st.session_state.weak_features
+                    st.session_state.prediction, 
+                    st.session_state.weak_features,
+                    context_text=st.session_state.pdf_text
                 )
 
-        st.markdown(
-            f'<div class="ai-report-container">\n\n{st.session_state.ai_advice}\n\n</div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown(f'<div class="ai-report-container">\n\n{st.session_state.ai_advice}\n\n</div>', unsafe_allow_html=True)
+        st.markdown("<hr style='border: none; height: 1px; background: rgba(255,255,255,0.1); margin: 40px 0;'/>", unsafe_allow_html=True)
+        
+        st.markdown("<h3 style='color: #F8FAFC; font-weight: 800; font-size: 1.6rem; margin-bottom: 20px;'>Interactive Mentor Chat</h3>", unsafe_allow_html=True)
+        
+        # Display Chat History
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+        
+        # Chat Input
+        if prompt := st.chat_input("Ask a follow-up question about your study plan..."):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+                
+            with st.chat_message("assistant"):
+                with st.spinner("Analyzing context..."):
+                    response = advisor.answer_followup(
+                        question=prompt, 
+                        chat_history=st.session_state.messages[:-1], # pass all except the latest user prompt
+                        context_text=st.session_state.pdf_text
+                    )
+                st.markdown(response)
+            
+            st.session_state.messages.append({"role": "assistant", "content": response})
 
         st.markdown("</div>", unsafe_allow_html=True)
 
