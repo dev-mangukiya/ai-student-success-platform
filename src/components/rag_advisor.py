@@ -56,8 +56,18 @@ Include Performance Analysis, Weakness Explanation, Personalized Study Roadmap, 
             else:
                 return "Gemini returned an empty response."
 
-        except Exception:
-            return self._get_static_advice(prediction, weak_features)
+        except Exception as e:
+            error_header = f"""
+> 🚨 **SYSTEM ERROR: Google Gemini API Connection Failed**
+> The application successfully attempted to call the Gemini API, but Google's servers actively rejected the request with the following error:
+> 
+> `{str(e)}`
+> 
+> *Because the live generative node failed, the system has automatically triggered the internal rules-engine backup advisor below.*
+
+---
+"""
+            return error_header + self._get_static_advice(prediction, weak_features)
 
     def _get_static_advice(self, prediction, weak_features):
         """
