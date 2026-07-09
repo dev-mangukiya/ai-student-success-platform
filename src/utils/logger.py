@@ -26,7 +26,9 @@ os.makedirs(LOG_DIR, exist_ok=True)
 _LOG_FILE_NAME = f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
 LOG_FILE_PATH = os.path.join(LOG_DIR, _LOG_FILE_NAME)
 
-_LOG_FORMAT = "[%(asctime)s] %(levelname)-8s | %(name)s | %(module)s:%(lineno)d | %(message)s"
+_LOG_FORMAT = (
+    "[%(asctime)s] %(levelname)-8s | %(name)s | %(module)s:%(lineno)d | %(message)s"
+)
 
 # Configure the root logger exactly once per process.
 #
@@ -47,7 +49,9 @@ _already_configured = any(
 if not _already_configured:
     file_handler = logging.FileHandler(LOG_FILE_PATH)
     file_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
-    file_handler._student_success_ai_handler = True  # tag for the idempotency check above
+    file_handler._student_success_ai_handler = (
+        True  # tag for the idempotency check above
+    )
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(logging.Formatter(_LOG_FORMAT))

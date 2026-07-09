@@ -7,8 +7,8 @@ load_dotenv()
 
 print("🔥🔥🔥 NEW RAG_ADVISOR.PY FILE LOADED 🔥🔥🔥", flush=True)
 
-class RAGAdvisor:
 
+class RAGAdvisor:
     def __init__(self):
         print("🤖 RAGAdvisor object created", flush=True)
         self.api_key = None
@@ -18,15 +18,17 @@ class RAGAdvisor:
         # LOAD GEMINI API KEY
         # ==========================
         try:
-            self.api_key = st.secrets.get("GEMINI_API_KEY") or st.secrets.get("GOOGLE_API_KEY")
+            self.api_key = st.secrets.get("GEMINI_API_KEY") or st.secrets.get(
+                "GOOGLE_API_KEY"
+            )
             if self.api_key:
                 print("✅ GEMINI KEY LOADED FROM STREAMLIT SECRETS", flush=True)
             else:
                 raise Exception("Not found in secrets")
-        except Exception as e:
+        except Exception:
             print("⚠️ Streamlit secrets not found, checking ENV", flush=True)
             self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-            
+
             if self.api_key:
                 print("✅ GEMINI KEY LOADED FROM ENVIRONMENT", flush=True)
             else:
@@ -44,12 +46,15 @@ class RAGAdvisor:
         print("🚀 GEMINI FUNCTION CALLED 🚀", flush=True)
 
         if self.model is None:
-            print("⚠️ Model uninitialized. Routing to deep local matrix advisor...", flush=True)
+            print(
+                "⚠️ Model uninitialized. Routing to deep local matrix advisor...",
+                flush=True,
+            )
             return self._get_static_advice(prediction, weak_features)
 
         try:
             print("🌐 Sending request to Gemini...", flush=True)
-            
+
             prompt = f"""
 You are an expert AI academic mentor.
 Analyze this student:
@@ -67,17 +72,26 @@ Include Performance Analysis, Weakness Explanation, Personalized Study Roadmap, 
             else:
                 return "Gemini returned an empty response."
 
-        except Exception as e:
-            print("❌ GEMINI CALL FAILED. Triggering deep local backup advisor...", flush=True)
+        except Exception:
+            print(
+                "❌ GEMINI CALL FAILED. Triggering deep local backup advisor...",
+                flush=True,
+            )
             return self._get_static_advice(prediction, weak_features)
 
     def _get_static_advice(self, prediction, weak_features):
         """
-        Generates an exhaustive, highly detailed, multi-paragraph report 
+        Generates an exhaustive, highly detailed, multi-paragraph report
         tailored deeply to student performance metrics and individual topics.
         """
-        clean_weak = [w.replace(" Focus", "").replace(" Comprehension", "").replace(" Synthesizing", "").replace(" Absence", "") for w in weak_features]
-        
+        clean_weak = [
+            w.replace(" Focus", "")
+            .replace(" Comprehension", "")
+            .replace(" Synthesizing", "")
+            .replace(" Absence", "")
+            for w in weak_features
+        ]
+
         # ==========================================
         # 1. CORE PERFORMANCE TIER MATRIX
         # ==========================================
@@ -85,76 +99,76 @@ Include Performance Analysis, Weakness Explanation, Personalized Study Roadmap, 
             tier = "Elite Academic Performer (Optimization Phase)"
             analysis = f"""Your predictive baseline is sitting at an outstanding **{prediction:.2f}%**. 
 At this level, you have a solid conceptual foundation and excel at standard assessments. Your primary risk is complacency or losing critical marks to minor edge cases, subtle presentation nuances, or formatting technicalities. Instead of spending time passively reading textbooks, your focus must shift toward high-level synthesis, cross-topic integration, and timed speed runs to build flawless mental execution."""
-            
+
             strategy = """### 🎯 Advanced Strategy: The 3-Tier Error Log Architecture
 1. **Isolate Minor Variances:** Set up a dedicated 'Flaw Matrix' spreadsheet. Document every single problem you miss during mock practice, categorized under: *Careless Input, Conceptual Gap, or Misread Constraint*.
 2. **Blind Re-Testing System:** Do not look at solutions when you get stuck. Write down the problem on a physical note card, store it away, and re-attempt it blindly exactly 72 hours later to verify neural pathways have formed.
 3. **Optimize Explanatory Frameworks:** Attempt to write concise summary notes for complex sub-modules from scratch without accessing documentation."""
-            
+
             roadmap = """* **Phase 1 (Days 1–7): Lateral Synthesis Drills**
   Dedicate your study slots to solving competitive problems or interdisciplinary case studies that draw from multiple chapters simultaneously.
 * **Phase 2 (Days 8–14): Hard Time Constraints**
   Take standard exam papers but reduce the allocated completion time by exactly 20%. This forces your brain to bypass over-deliberation.
 * **Phase 3 (Days 15+): Peer-Teaching Validation**
   Solidify your learning by explaining complex conceptual architectures out loud to peers. Verbalization exposes hidden gaps instantly."""
-              
+
             motivation = "You are operating in the upper decile of performance. True high performance is built by treating a 1-to-2 percent variance with the same urgency as a failing grade. Stay sharp, hold yourself to absolute precision, and aim to maximize your potential."
 
         elif prediction >= 70:
             tier = "Capable Performer (Consistency Phase)"
             analysis = f"""Your model projection indicates a stable competency baseline at **{prediction:.2f}%**. 
 This confirms that you understand the material when it is presented in isolation, but you experience performance dips under examination pressures. This performance profile is typical of a student who relies heavily on passive review cycles (like highlighting or reading over notes) rather than aggressive information retrieval. Your clear objective is to bridge the gap between abstract comprehension and fast, reliable execution."""
-            
+
             strategy = """### 🎯 Competency Strategy: Aggressive Active Retrieval Cycles
 1. **The Closed-Book Canvas:** Before opening a textbook to study a module, spend 10 minutes writing out every formula, concept, and definition you can remember on a blank piece of paper. Open the text, find what you missed, and write those missing items in red pen.
 2. **Variable Interval Question Banking:** Instead of answering 20 identical question types sequentially, shuffle your problem sets. Force your brain to switch between completely different modules every 3 questions.
 3. **Audit Your Scoring Leaks:** Identify whether your point loss is clustered at the beginning of exams (test anxiety) or the final 20% (cognitive fatigue). Adjust your stamina accordingly."""
-            
+
             roadmap = """* **Phase 1 (Days 1–7): Foundation Hardening**
   Go through your notes and turn every major heading into a diagnostic question. Build flashcard loops targeting exact definitions.
 * **Phase 2 (Days 8–14): Unassisted Transition**
   Move completely away from open-book workbook sessions. Complete all afternoon question bundles with textbooks closed.
 * **Phase 3 (Days 15+): Targeted Mock Interventions**
   Run full-length diagnostic mock assessments. Do not look at the keys until you have completed the entire test paper."""
-              
+
             motivation = "You are incredibly close to moving into the elite academic bracket. You already have the core intelligence required—all that remains is refining your consistency. Target your weak areas directly and trust your preparation."
 
         elif prediction >= 50:
             tier = "Marginal Pass Profile (Remediation Phase)"
             analysis = f"""The system analytics engine alerts us to an at-risk projection of **{prediction:.2f}%**. 
 This reveals clear gaps in your core conceptual frameworks. You are likely relying on memorizing specific answer formats rather than understanding the underlying logic. As topics build on top of each other, this superficial understanding begins to collapse under examination conditions. We must pause broad testing and execute a structural rebuild of your foundational elements."""
-            
+
             strategy = """### 🎯 Remediation Strategy: The Micro-Concept Build Protocol
 1. **The Simplified Mentor Technique:** Pick a complex topic from your weak areas. Write down an explanation using only simple language, completely avoiding technical jargon. If your explanation becomes muddy, you do not fully understand the concept yet.
 2. **Secure Easy Baseline Marks:** Sort your syllabus by weight. Isolate the core definitions and standard, high-probability questions that appear every year. Master these completely before looking at advanced material.
 3. **Mandatory Solved-Example Tracing:** Take 5 fully solved textbook examples. Cover the solution, write down each step of your calculation, and compare your process line-by-line with the text."""
-            
+
             roadmap = """* **Phase 1 (Days 1–7): Core Glossary Mapping**
   Do not touch complex question sets. Spend this week mastering the underlying terms, basic rules, and foundational mechanics.
 * **Phase 2 (Days 8–14): Scaffolded Problem Solving**
   Begin solving simple problems with your textbook open. Focus entirely on executing the correct sequential steps.
 * **Phase 3 (Days 15+): Closed-Book Base Drills**
   Transition to unassisted basic problems. Re-test yourself on the exact same solved examples from Week 1 to confirm retention."""
-              
+
             motivation = "This predictive metric is a helpful diagnostic indicator, not a definitive final outcome. Academic recovery is achieved through systematic, focused, daily changes. Win one study block tomorrow morning and build momentum from there."
 
         else:
             tier = "Critical Rescue Status (Emergency Intervention)"
             analysis = f"""Emergency indicator triggered. Your performance vector is currently tracking at a critical **{prediction:.2f}%**. 
 Your current study routine is not translating into safe passing margins. We must immediately pause high-level testing, strip your schedule down to essentials, and implement a highly focused remediation plan to secure passing marks."""
-            
+
             strategy = """### 🎯 Rescue Strategy: High-Yield Extraction Framework
 1. **Execute Radical Syllabus Pruning:** Identify the top 3 core topics that historically carry over 60% of total exam points. Isolate these completely; they are your only priorities for the next 10 days.
 2. **Master Standard Workflows:** Memorize the structural recipes for standard, repetitive problem variants to secure base marks on partial credit alone.
 3. **Daily Accountability Checks:** Build a 3-item daily checklist. Do not go to sleep until you have successfully written out, memorized, and verified three core formulas or terms."""
-            
+
             roadmap = """* **Phase 1 (Days 1–7): Emergency Reconstruction**
   Work through fundamental example problems with the textbook open. Write out every single step in large, clear handwriting, explicitly describing the logic.
 * **Phase 2 (Days 8–14): High-Yield Memorization**
   Build a physical formula wall or a set of core flashcards. Run through them three times a day to ensure key definitions are instantly retrievable.
 * **Phase 3 (Days 15+): Replicating Base Exam Formats**
   Attempt only the easiest sections of past exam papers to systematically pick up early structural points."""
-              
+
             motivation = "Your past test scores do not define your capabilities. Academic turnarounds happen the moment you replace stress with structured action. Take control of your routine, step by step."
 
         # ==========================================
@@ -167,22 +181,38 @@ Your analytical trend shows zero critical subject vulnerabilities or preparation
         else:
             breakdown_parts = []
             routine_parts = []
-            
+
             if "Mathematics" in clean_weak:
-                breakdown_parts.append("* **📐 Quantitative & Mathematical Mechanics:** Slipping below baseline marks here suggests calculation friction or skim-reading equations. Mathematical understanding is stored in mechanical muscle memory. You must solve problems from scratch to build reliable instincts.")
-                routine_parts.append("* **📐 Quantitative Extraction (45 Mins):** Take 5 unattempted intermediate questions. Write out your steps clearly, circling algebraic conversions where errors occur. Verify against the solution key only after finishing.")
-                
+                breakdown_parts.append(
+                    "* **📐 Quantitative & Mathematical Mechanics:** Slipping below baseline marks here suggests calculation friction or skim-reading equations. Mathematical understanding is stored in mechanical muscle memory. You must solve problems from scratch to build reliable instincts."
+                )
+                routine_parts.append(
+                    "* **📐 Quantitative Extraction (45 Mins):** Take 5 unattempted intermediate questions. Write out your steps clearly, circling algebraic conversions where errors occur. Verify against the solution key only after finishing."
+                )
+
             if "Reading" in clean_weak:
-                breakdown_parts.append("* **📖 Reading Comprehension & Text Synthesis:** This vulnerability suggests challenges with high-speed contextual processing. You are likely burning too much mental energy re-reading dense passages during exams.")
-                routine_parts.append("* **📖 Contextual Isolation Drill (30 Mins):** Read a dense academic passage. Close the book, set a 60-second timer, and summarize the primary thesis and core conclusion in three short bullet points.")
-                
+                breakdown_parts.append(
+                    "* **📖 Reading Comprehension & Text Synthesis:** This vulnerability suggests challenges with high-speed contextual processing. You are likely burning too much mental energy re-reading dense passages during exams."
+                )
+                routine_parts.append(
+                    "* **📖 Contextual Isolation Drill (30 Mins):** Read a dense academic passage. Close the book, set a 60-second timer, and summarize the primary thesis and core conclusion in three short bullet points."
+                )
+
             if "Written" in clean_weak:
-                breakdown_parts.append("* **✍️ Structural Expression & Technical Writing:** Points are likely being dropped because of vague explanations or missing subject-specific terminology. You need to use precise definitions and clear, structured logic.")
-                routine_parts.append("* **✍️ Technical Articulation Drill (30 Mins):** Review past answers. Rewrite them using precise vocabulary and clear structural signposts to make your grading criteria obvious.")
-                
+                breakdown_parts.append(
+                    "* **✍️ Structural Expression & Technical Writing:** Points are likely being dropped because of vague explanations or missing subject-specific terminology. You need to use precise definitions and clear, structured logic."
+                )
+                routine_parts.append(
+                    "* **✍️ Technical Articulation Drill (30 Mins):** Review past answers. Rewrite them using precise vocabulary and clear structural signposts to make your grading criteria obvious."
+                )
+
             if "Preparatory Mock" in clean_weak:
-                breakdown_parts.append("* **📋 Strategic Test Preparation Deficit:** Entering exams without preparatory tracks leaves you blind to specific formatting styles and timing splits, resulting in severe time management issues.")
-                routine_parts.append("* **📋 Simulated Testing Block (30 Mins):** Isolate a single section of a past test paper. Set a countdown timer to match the exact per-question limit of the real exam in a quiet space.")
+                breakdown_parts.append(
+                    "* **📋 Strategic Test Preparation Deficit:** Entering exams without preparatory tracks leaves you blind to specific formatting styles and timing splits, resulting in severe time management issues."
+                )
+                routine_parts.append(
+                    "* **📋 Simulated Testing Block (30 Mins):** Isolate a single section of a past test paper. Set a countdown timer to match the exact per-question limit of the real exam in a quiet space."
+                )
 
             weakness_breakdown = "\n\n".join(breakdown_parts)
             subject_routine = "\n".join(routine_parts)

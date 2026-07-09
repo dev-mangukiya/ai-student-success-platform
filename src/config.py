@@ -27,7 +27,7 @@ DATA_DIR = os.path.join(ROOT_DIR, "data")
 RAW_DATA_DIR = os.path.join(DATA_DIR, "raw")
 PROCESSED_DATA_DIR = os.path.join(DATA_DIR, "processed")
 
-RAW_DATA_FILE = os.path.join(RAW_DATA_DIR, "student_performance.csv")
+RAW_DATA_FILE = os.path.join(RAW_DATA_DIR, "StudentsPerformance.csv")
 TRAIN_DATA_FILE = os.path.join(PROCESSED_DATA_DIR, "train.csv")
 TEST_DATA_FILE = os.path.join(PROCESSED_DATA_DIR, "test.csv")
 
@@ -66,7 +66,7 @@ RANDOM_STATE = 42
 
 # Risk category thresholds derived from predicted score.
 RISK_THRESHOLDS = {
-    "low_risk_min": 75,     # score >= 75  -> Low Risk
+    "low_risk_min": 75,  # score >= 75  -> Low Risk
     "medium_risk_min": 50,  # 50 <= score < 75 -> Medium Risk
     # score < 50 -> High Risk
 }
