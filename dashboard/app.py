@@ -504,7 +504,6 @@ if st.session_state.prediction_triggered:
                 textposition="inside",
                 textfont=dict(size=18, color="white", family="Outfit", weight="bold"),
                 marker_line_width=0,
-                marker_border_width=0,
             )
             bar.update_layout(
                 showlegend=False,
