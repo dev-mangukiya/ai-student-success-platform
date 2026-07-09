@@ -17,10 +17,15 @@ import PyPDF2
 import io
 
 import importlib
+import src.components.database as db
 from src.components import rag_advisor
 importlib.reload(rag_advisor)
 from src.components.rag_advisor import RAGAdvisor
-from src.config import REGRESSOR_MODEL_PATH, PREPROCESSOR_PATH
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REGRESSOR_MODEL_PATH = os.path.join(BASE_DIR, "src", "artifacts", "advanced_regressor.pkl")
+PREPROCESSOR_PATH = os.path.join(BASE_DIR, "src", "artifacts", "advanced_preprocessor.pkl")
+from src.components.database import save_prediction, get_student_history
 
 # ==========================
 # RESPONSIVE PAGE CONFIG
@@ -328,58 +333,41 @@ with st.sidebar:
 
     if app_mode == "Student Telemetry":
         st.markdown("<p style='color: #64748B; font-size: 0.9rem; margin-bottom: 25px;'>Input individual parameters to generate telemetry.</p>", unsafe_allow_html=True)
-
-        st.markdown(
-            "<h4 style='color: #94A3B8; font-weight: 600; font-size: 1rem; margin-top: 10px;'>Demographics</h4>",
-            unsafe_allow_html=True,
-        )
-        gender = st.selectbox("Gender Identity", ["male", "female"])
-        race = st.selectbox(
-            "Demographic Group", ["group A", "group B", "group C", "group D", "group E"]
-        )
-
-        st.markdown(
-            "<h4 style='color: #94A3B8; font-weight: 600; font-size: 1rem; margin-top: 20px;'>Background</h4>",
-            unsafe_allow_html=True,
-        )
-        parental = st.selectbox(
-            "Parental Education",
-            [
-                "some high school",
-                "high school",
-                "some college",
-                "associate's degree",
-                "bachelor's degree",
-                "master's degree",
-            ],
-        )
-        lunch = st.selectbox("Meal Plan", ["standard", "free/reduced"])
-        test_preparation_course = st.selectbox(
-            "Prep Course Completion", ["completed", "none"]
-        )
-
-        st.markdown(
-            "<hr style='border: none; height: 1px; background: rgba(255,255,255,0.1); margin: 30px 0;'/>",
-            unsafe_allow_html=True,
-        )
-
-        st.markdown(
-            "<h4 style='color: #94A3B8; font-weight: 600; font-size: 1rem;'>Current Telemetrics</h4>",
-            unsafe_allow_html=True,
-        )
-        math_score = st.slider("📐 Quantitative Logic (Math)", 0, 100, 70)
-        reading_score = st.slider("📖 Comprehension (Reading)", 0, 100, 70)
-        writing_score = st.slider("✍️ Expression (Writing)", 0, 100, 70)
+        
+        student_id = st.text_input("Student ID (For DB Tracking)", value="STU-001")
+        
+        with st.expander("👤 Demographics & Background", expanded=True):
+            age_at_enrollment = st.slider("Age at Enrollment", 17, 60, 20)
+            gender = st.selectbox("Gender", ["male", "female"])
+            marital_status = st.selectbox("Marital Status", ["single", "married", "other"])
+            displacement = st.selectbox("Displacement", ["yes", "no"])
+            parent_education = st.selectbox("Parent Education", ["high_school", "bachelors", "masters", "phd", "none"])
+            parent_occupation = st.selectbox("Parent Occupation", ["white_collar", "blue_collar", "unemployed", "business"])
+            
+        with st.expander("💰 Financials", expanded=False):
+            tuition_fees = st.selectbox("Tuition Fees Up To Date", ["yes", "no"])
+            scholarship = st.selectbox("Scholarship Holder", ["yes", "no"])
+            debtor = st.selectbox("Debtor", ["yes", "no"])
+            
+        with st.expander("🌍 Macroeconomic Variables", expanded=False):
+            inflation_rate = st.slider("Inflation Rate (%)", -2.0, 10.0, 2.5)
+            gdp_growth = st.slider("GDP Growth (%)", -5.0, 10.0, 1.5)
+            unemployment_rate = st.slider("Unemployment Rate (%)", 0.0, 25.0, 5.5)
+            
+        with st.expander("📚 Academic Behavior", expanded=False):
+            s1_enrolled = st.slider("S1 Units Enrolled", 0, 10, 5)
+            s1_approved = st.slider("S1 Units Approved", 0, 10, 5)
+            s1_attendance = st.slider("S1 Seminar Attendance (%)", 0, 100, 85)
+            
+            s2_enrolled = st.slider("S2 Units Enrolled", 0, 10, 5)
+            s2_approved = st.slider("S2 Units Approved", 0, 10, 5)
+            s2_attendance = st.slider("S2 Seminar Attendance (%)", 0, 100, 85)
 
         st.markdown("<hr style='border: none; height: 1px; background: rgba(255,255,255,0.1); margin: 30px 0;'/>", unsafe_allow_html=True)
         st.markdown("<h4 style='color: #94A3B8; font-weight: 600; font-size: 1rem;'>True Document RAG</h4>", unsafe_allow_html=True)
         uploaded_syllabus = st.file_uploader("Upload Course Syllabus (PDF)", type=["pdf"], help="The AI will ingest this document and tailor your study plan to the specific course material.")
-
         st.markdown("<br>", unsafe_allow_html=True)
-
-        predict_clicked = st.button(
-            "Initialize Sequence 🚀", use_container_width=True, type="primary"
-        )
+        predict_clicked = st.button("Initialize Sequence 🚀", use_container_width=True, type="primary")
     else:
         st.markdown("<p style='color: #64748B; font-size: 0.9rem; margin-bottom: 25px;'>Upload class data for bulk predictive triage.</p>", unsafe_allow_html=True)
         uploaded_csv = st.file_uploader("Upload Classroom CSV", type=["csv"])
@@ -415,49 +403,57 @@ if st.session_state.app_mode == "Student Telemetry":
 
         input_data = pd.DataFrame(
             {
+                "age_at_enrollment": [age_at_enrollment],
                 "gender": [gender],
-                "race/ethnicity": [race],
-                "parental level of education": [parental],
-                "lunch": [lunch],
-                "test preparation course": [test_preparation_course],
-                "math score": [math_score],
-                "reading score": [reading_score],
-                "writing score": [writing_score],
+                "marital_status": [marital_status],
+                "displacement": [displacement],
+                "parent_education": [parent_education],
+                "parent_occupation": [parent_occupation],
+                "tuition_fees_up_to_date": [tuition_fees],
+                "scholarship_holder": [scholarship],
+                "debtor": [debtor],
+                "inflation_rate": [inflation_rate],
+                "gdp_growth": [gdp_growth],
+                "unemployment_rate": [unemployment_rate],
+                "s1_curricular_units_enrolled": [s1_enrolled],
+                "s1_curricular_units_approved": [s1_approved],
+                "s1_seminar_attendance": [s1_attendance],
+                "s2_curricular_units_enrolled": [s2_enrolled],
+                "s2_curricular_units_approved": [s2_approved],
+                "s2_seminar_attendance": [s2_attendance],
             }
         )
-
-        # Cache transformed data for SHAP tab
+        
+        # Save to DB
         st.session_state.transformed_input = preprocessor.transform(input_data)
-
         pred = model.predict(st.session_state.transformed_input)[0]
         st.session_state.prediction = pred
+        
+        db.save_prediction(student_id, input_data.iloc[0].to_dict(), pred)
+        
+        st.session_state.avg_score = (s1_attendance + s2_attendance) / 2  # mock base
+        st.session_state.weak_features = []
+        if s2_approved < s2_enrolled:
+            st.session_state.weak_features.append("Failed Curricular Units")
+        if tuition_fees == "no" or debtor == "yes":
+            st.session_state.weak_features.append("Financial Hardship")
+        if s2_attendance < 70:
+            st.session_state.weak_features.append("Low Seminar Attendance")
+        st.session_state.student_id = student_id
 
-        # Core Metric Risk Allocations
-        weak = []
-        if math_score < 60:
-            weak.append("Mathematics Focus")
-        if reading_score < 60:
-            weak.append("Reading Comprehension")
-        if writing_score < 60:
-            weak.append("Written Synthesizing")
-        if test_preparation_course == "none":
-            weak.append("Preparatory Mock Absence")
-
-        st.session_state.weak_features = weak
-        st.session_state.avg_score = (math_score + reading_score + writing_score) / 3
-        st.session_state.ai_advice = None
 
 
     # ==========================
     # DISPLAY INTERFACE
     # ==========================
     if st.session_state.prediction_triggered:
-        dashboard, charts, explain, ai = st.tabs(
+        dashboard, charts, explain, ai, tracking = st.tabs(
             [
                 "⊞ Command Center",
                 "🌌 Neural Visuals",
                 "🧠 XAI Explainability",
                 "🤖 Gemini Strategist",
+                "📈 DB Tracking",
             ]
         )
 
@@ -553,8 +549,8 @@ if st.session_state.app_mode == "Student Telemetry":
 
             score_df = pd.DataFrame(
                 {
-                    "Subject": ["Math", "Reading", "Writing"],
-                    "Score": [math_score, reading_score, writing_score],
+                    "Metric": ["S1 Attendance", "S2 Attendance", "S1 Approved Units", "S2 Approved Units"],
+                    "Value": [s1_attendance, s2_attendance, s1_approved * 10, s2_approved * 10],
                 }
             )
 
@@ -563,15 +559,16 @@ if st.session_state.app_mode == "Student Telemetry":
             with chart_col1:
                 bar = px.bar(
                     score_df,
-                    x="Subject",
-                    y="Score",
-                    text="Score",
+                    x="Metric",
+                    y="Value",
+                    text="Value",
                     title="Capability Matrix",
-                    color="Subject",
+                    color="Metric",
                     color_discrete_map={
-                        "Math": "#38BDF8",
-                        "Reading": "#818CF8",
-                        "Writing": "#C084FC",
+                        "S1 Attendance": "#38BDF8",
+                        "S2 Attendance": "#818CF8",
+                        "S1 Approved Units": "#C084FC",
+                        "S2 Approved Units": "#34D399",
                     },
                 )
                 bar.update_traces(
@@ -635,12 +632,13 @@ if st.session_state.app_mode == "Student Telemetry":
                 radar = go.Figure()
                 radar.add_trace(
                     go.Scatterpolar(
-                        r=[math_score, reading_score, writing_score, math_score],
+                        r=[s1_attendance, s2_attendance, s1_approved * 10, s2_approved * 10, s1_attendance],
                         theta=[
-                            "Quantitative",
-                            "Comprehension",
-                            "Synthesizing",
-                            "Quantitative",
+                            "S1 Attendance",
+                            "S2 Attendance",
+                            "S1 Approved",
+                            "S2 Approved",
+                            "S1 Attendance",
                         ],
                         fill="toself",
                         fillcolor="rgba(56, 189, 248, 0.2)",
